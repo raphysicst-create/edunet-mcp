@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "sourceType": "assessment_criteria",
+      "officialHost": "api.edunet.net",
+      "pathPattern": "/search/searchApi/search?collection=evl_data",
+      "discoveryMethod": "api",
+      "checkedAt": "2026-09-16T02:38:09.142Z",
+      "enabled": true
+    },
+    {
+      "sourceType": "curriculum",
+      "officialHost": "api.edunet.net",
+      "pathPattern": "/search/searchApi/search?collection=crclm",
+      "discoveryMethod": "api",
+      "checkedAt": "2026-09-16T02:38:09.142Z",
+      "enabled": true
+    },
+    {
+      "sourceType": "class_study_material",
+      "officialHost": "api.edunet.net",
+      "pathPattern": "/main/clssStdDt/getClssStdDtInfo/{id}",
+      "discoveryMethod": "known_detail",
+      "checkedAt": "2026-09-17T15:12:00.000Z",
+      "enabled": true
+    },
+    {
+      "sourceType": "subject_learning_material",
+      "officialHost": "api.edunet.net",
+      "pathPattern": "/main/conts/getContsData?contsId={id}&prgrmId=0",
+      "discoveryMethod": "known_detail",
+      "checkedAt": "2026-09-17T15:12:00.000Z",
+      "enabled": true
+    }
+  ]
+}
