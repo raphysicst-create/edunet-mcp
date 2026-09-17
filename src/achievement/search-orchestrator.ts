@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { searchEdunet } from "../client.js";
 import type { SearchInput, SearchOutput } from "../schema.js";
-import { resolveResource } from "../resource/resolver.js";
+import { resolveResource, resourceDetailUrl } from "../resource/resolver.js";
 import {
   searchAchievementInputSchema, type AchievementCandidate, type AchievementSearchResponse,
   type ResourceDetails, type ResourceIdentity, type SearchAchievementInput, type Warning,
@@ -44,21 +44,51 @@ function abortable<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
 }
 
 function resourceFrom(item: SearchOutput["items"][number]): ResourceIdentity {
-  const idFromPath = detailRegistryPath(item.url ?? undefined) ? new URL(item.url!).pathname.replace(/\/$/, "").split("/").at(-1) : undefined;
+  const pathId = detailRegistryPath(item.url ?? undefined) ? new URL(item.url!).pathname.replace(/\/$/, "").split("/").at(-1) : undefined;
+  const idFromPath = pathId && /^\d{1,20}$/.test(pathId) ? pathId : undefined;
+  const upstreamId = item.id && item.id.length <= 300 ? item.id : undefined;
   return {
-    id: item.id || idFromPath || `search:${createHash("sha256").update(`${item.url ?? ""}\n${item.title ?? ""}`).digest("hex").slice(0, 32)}`,
+    id: upstreamId || idFromPath || `search:${createHash("sha256").update(`${item.id ?? ""}\n${item.url ?? ""}\n${item.title ?? ""}\n${item.content}`).digest("hex").slice(0, 32)}`,
     title: (item.title || "제목 미제공").slice(0, 2000),
-    ...(item.url ? {sourceUrl: item.url.slice(0, 4000)} : {}),
+    ...(item.url && item.url.length <= 4000 ? {sourceUrl: item.url} : {}),
     ...(item.content ? {snippet: item.content.slice(0, 2000)} : {}),
     ...(item.category ? {sourceType: item.category.slice(0, 200)} : {}),
   };
 }
 
 function identity(resource: ResourceIdentity): string {
+  const detail = resourceDetailUrl(resource);
+  if (detail) return `${detail.pathname}?${detail.searchParams.get("contsId") ?? ""}`;
   if (resource.sourceUrl) {
-    try { const url = new URL(resource.sourceUrl); return `${url.hostname}${url.pathname.replace(/\/$/, "")}`; } catch { /* Use the API ID. */ }
+    try {
+      const url = new URL(resource.sourceUrl);
+      // Unknown/legacy paths can carry their actual document identity in the query.
+      url.hash = "";
+      url.searchParams.delete("contents_openapi");
+      url.searchParams.sort();
+      return `${resource.id}|${url.href}`;
+    } catch { /* Use the API ID. */ }
   }
   return resource.id;
+}
+
+function utf8Prefix(value: string, limit: number): string {
+  let bytes = 0, result = "";
+  for (const point of value) {
+    bytes += Buffer.byteLength(point);
+    if (bytes > limit) break;
+    result += point;
+  }
+  return result;
+}
+
+function referenceResource(resource: ResourceIdentity): ResourceIdentity {
+  const compact = {...resource, title: utf8Prefix(resource.title, 600),
+    ...(resource.snippet ? {snippet: utf8Prefix(resource.snippet, 1000)} : {}),
+    ...(resource.sourceType ? {sourceType: utf8Prefix(resource.sourceType, 200)} : {}),
+  };
+  if (Buffer.byteLength(JSON.stringify(compact)) > 8000) throw new Error("reference provenance limit");
+  return compact;
 }
 
 function score(resource: ResourceIdentity, details?: ResourceDetails): {score: number; reasons: string[]; text: string} {
@@ -105,11 +135,12 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
     const searchTimer = setTimeout(() => searchPhase.abort(), Math.max(1, Math.floor(milliseconds * 0.65)));
     const searchSignal = AbortSignal.any([signal, searchPhase.signal]);
     const search = deps.search ?? searchEdunet;
-    const resolver = deps.resolveResource ?? resolveResource;
+    const resolver = deps.resolveResource ?? ((resource: ResourceIdentity, requestSignal?: AbortSignal) => resolveResource(resource, requestSignal, deps.registry === undefined ? {} : {registry: deps.registry}));
     const resources = new Map<string, {resource: ResourceIdentity; achievementQuery: boolean; registry?: string}>();
     let successes = 0;
     let failed = false;
     let upstreamHasNext = false;
+    let upstreamPaginationUnknown = false;
     try {
       const plans: {query: string; categories: SearchInput["categories"]; registryPath?: string}[] = queryVariants.map(query => ({query, categories: []}));
       const broadQuery = clipQuery(queryVariants[0]!.replace(achievementTerms, " ")) || queryVariants[0]!;
@@ -117,26 +148,33 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
         const collection = registryCollection(entry);
         if (collection) plans.push({query: broadQuery, categories: [collection], registryPath: entry.pathPattern});
       }
-      await Promise.all(plans.map(async plan => {
-        if (searchSignal.aborted) return;
+      const recordAttempt = (plan: typeof plans[number]): void => {
         coverage.officialApiQueried = true;
         if (!coverage.queryVariantsTried.includes(plan.query)) coverage.queryVariantsTried.push(plan.query);
-        if (plan.registryPath) coverage.registryPathsChecked.push(plan.registryPath);
+        if (plan.registryPath && !coverage.registryPathsChecked.includes(plan.registryPath)) coverage.registryPathsChecked.push(plan.registryPath);
+      };
+      await Promise.all(plans.map(async plan => {
+        if (searchSignal.aborted) return;
         try {
           const result = await abortable(search({query: plan.query, categories: plan.categories, sort: "relevance", searchType: "title_summary", page: input.page, pageSize: input.pageSize}, searchSignal), searchSignal);
+          recordAttempt(plan);
           successes++;
           upstreamHasNext ||= result.pagination.hasNextPage === true;
+          upstreamPaginationUnknown ||= result.pagination.hasNextPage === null;
           for (const item of result.items) {
             const resource = resourceFrom(item);
+            if (item.url && !resource.sourceUrl) warnings.push({code: "source_link_limit", message: "API 출처 URL이 길이 한도를 초과하여 제외했습니다. 잘린 주소를 원문 링크로 제공하지 않습니다."});
             const key = identity(resource);
             const achievementQuery = /성취\s*(?:수준|기준)|평가\s*기준/.test(plan.query);
             const existing = resources.get(key);
             if (existing) { existing.achievementQuery ||= achievementQuery; continue; }
             resources.set(key, {resource, achievementQuery, ...(plan.registryPath ? {registry: plan.registryPath} : {})});
           }
-        } catch {
+        } catch (error) {
+          const configurationMissing = error !== null && typeof error === "object" && "code" in error && error.code === "CONFIGURATION";
+          if (!configurationMissing) recordAttempt(plan);
           failed = true;
-          warnings.push({code: searchSignal.aborted ? "discovery_search_timeout" : "official_search_unavailable", message: "일부 공식 검색 질의를 완료하지 못했습니다. 성공한 조회 범위만 반환합니다."});
+          warnings.push({code: configurationMissing ? "search_configuration_unavailable" : searchSignal.aborted ? "discovery_search_timeout" : "official_search_unavailable", message: "일부 공식 검색 질의를 완료하지 못했습니다. 성공한 조회 범위만 반환합니다."});
         }
       }));
       clearTimeout(searchTimer);
@@ -148,12 +186,12 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
       await Promise.all(Array.from({length: Math.min(4, inspected.length)}, async () => {
         while (index < inspected.length && !signal.aborted) {
           const current = inspected[index++]!;
-          const registryPath = detailRegistryPath(current.resource.sourceUrl);
+          const registryPath = resourceDetailUrl(current.resource) ? detailRegistryPath(current.resource.sourceUrl) : undefined;
           if (registryPath && registry.entries.some(entry => entry.pathPattern === registryPath) && !coverage.registryPathsChecked.includes(registryPath)) coverage.registryPathsChecked.push(registryPath);
           try {
             const details = await abortable(resolver(current.resource, signal), signal);
             // A dependency or upstream failure must not silently switch the selected resource.
-            if (details.resource.id !== current.resource.id) throw new Error("resource mismatch");
+            if (details.resource.id !== current.resource.id || details.resource.sourceUrl !== current.resource.sourceUrl) throw new Error("resource mismatch");
             resolved.set(identity(current.resource), details);
             if (metadataChecked(details)) coverage.attachmentMetadataChecked = true;
             else failed = true;
@@ -184,8 +222,12 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
         const hasHint = (hint: string | undefined): hint is string => !!hint && rankedCandidate.text.includes(hint);
         const codeHint = codePattern.exec(rankedCandidate.text)?.[0];
         try {
+          const refResource = referenceResource(resource);
+          const resourceRef = deps.references.issue("resource", {resource: refResource});
+          const achievementRef = deps.references.issue("achievement", {resource: refResource});
+          if (resourceRef.length > 16000 || achievementRef.length > 16000) throw new Error("reference length limit");
           candidates.push({score: rankedCandidate.score, value: {
-            resourceRef: deps.references.issue("resource", {resource}), achievementRef: deps.references.issue("achievement", {resource}),
+            resourceRef, achievementRef,
             title: resource.title, ...(resource.snippet ? {snippet: resource.snippet} : {}), ...(resource.sourceUrl ? {sourceUrl: resource.sourceUrl} : {}),
             ...(resource.sourceType ? {sourceType: resource.sourceType} : {}),
             ...(hasHint(input.grade) ? {gradeHint: input.grade} : {}), ...(hasHint(input.subject) ? {subjectHint: input.subject} : {}),
@@ -198,17 +240,30 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
         }
       }
       candidates.sort((a, b) => b.score - a.score || a.value.title.localeCompare(b.value.title, "ko"));
-      if (candidates.length > input.pageSize) warnings.push({code: "candidate_response_limit", message: "결합한 후보 중 요청한 개수만 표시했습니다. 조건을 좁히면 다른 후보를 확인할 수 있습니다."});
+      const results: AchievementCandidate[] = [];
+      let resultBytes = 0;
+      for (const candidate of candidates) {
+        const bytes = Buffer.byteLength(JSON.stringify(candidate.value));
+        if (results.length >= input.pageSize || resultBytes + bytes > 96000) break;
+        results.push(candidate.value);
+        resultBytes += bytes;
+      }
+      const mergedOverflow = results.length < candidates.length || ranked.length > inspected.length;
+      if (mergedOverflow) {
+        failed = true;
+        warnings.push({code: "candidate_response_limit", message: "결합한 후보가 반환 한도를 초과했습니다. 다음 공식 페이지는 생략된 후보를 복구하지 못하므로 nextPage를 발급하지 않습니다. 조건을 좁혀 다시 검색하세요."});
+      }
       if (signal.aborted) {
         failed = true;
         warnings.push({code: "discovery_timeout", message: "성취수준 발견의 시간 예산 내에 완료한 범위만 반환합니다."});
       }
-      const results = candidates.slice(0, input.pageSize).map(candidate => candidate.value);
-      const hasNext = upstreamHasNext && input.page < 50;
+      const hasNext = upstreamHasNext && input.page < 50 && !mergedOverflow;
+      const paginationUnknown = upstreamPaginationUnknown && !upstreamHasNext && !mergedOverflow && input.page < 50;
+      if (paginationUnknown) warnings.push({code: "pagination_unknown", message: "공식 API가 전체 건수를 제공하지 않아 다음 페이지 존재 여부를 확인할 수 없습니다."});
       return {
         kind: "edunet_achievement_search",
         status: successes === 0 ? "search_unavailable" : results.length === 0 ? (failed ? "partial" : "not_found_in_official_index") : failed ? "partial" : "ok",
-        results, pagination: {page: input.page, pageSize: input.pageSize, hasNext, ...(hasNext ? {nextPage: input.page + 1} : {})},
+        results, ...(!paginationUnknown ? {pagination: {page: input.page, pageSize: input.pageSize, hasNext, ...(hasNext ? {nextPage: input.page + 1} : {})}} : {}),
         coverage, warnings: uniqueWarnings(warnings),
       };
     } finally {

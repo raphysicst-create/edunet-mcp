@@ -1,5 +1,5 @@
 import type { ResourceIdentity, ResourceDetails, ResolvedAttachment, Warning } from "../achievement/contracts.js";
-import { detailRegistryPath } from "../achievement/source-registry.js";
+import { detailRegistryPath, inspectSourceRegistry, loadSourceRegistry, type AchievementSourceRegistryEntry } from "../achievement/source-registry.js";
 import { safeMetadataJson } from "../worker/safe-download.js";
 
 type JsonRecord = Record<string, unknown>;
@@ -10,6 +10,7 @@ const clean = (value: unknown, maximum = 2000): string => typeof value === "stri
 export interface ResolveResourceDependencies {
   fetchJson?: (url: URL, signal?: AbortSignal) => Promise<unknown>;
   timeoutMs?: number;
+  registry?: readonly AchievementSourceRegistryEntry[];
 }
 
 /** Builds only verified public metadata endpoints, never requests the supplied URL. */
@@ -66,8 +67,14 @@ function attachmentFrom(raw: unknown, resourceId: string, warnings: Warning[]): 
 export async function resolveResource(resource: ResourceIdentity, signal?: AbortSignal, deps: ResolveResourceDependencies = {}): Promise<ResourceDetails> {
   const url = resourceDetailUrl(resource);
   if (!url) return {resource, attachments: [], warnings: [{code: "detail_path_unverified", message: "공식 상세 경로 또는 자료 ID를 검증할 수 없어 첨부를 조회하지 않았습니다."}]};
-  const timeout = AbortSignal.timeout(Math.min(deps.timeoutMs ?? 4000, 4000));
-  const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const registry = deps.registry === undefined ? loadSourceRegistry() : inspectSourceRegistry(deps.registry);
+  if (!registry.entries.some(entry => entry.pathPattern === detailRegistryPath(resource.sourceUrl))) {
+    return {resource, attachments: [], warnings: [...registry.warnings, {code: "detail_path_unverified", message: "해당 공식 상세 경로가 registry에서 비활성화되어 첨부를 조회하지 않았습니다."}]};
+  }
+  const timeout = new AbortController();
+  const timeoutMs = Number.isFinite(deps.timeoutMs) ? Math.max(1, Math.min(deps.timeoutMs!, 4000)) : 4000;
+  const timer = setTimeout(() => timeout.abort(), timeoutMs);
+  const combined = signal ? AbortSignal.any([signal, timeout.signal]) : timeout.signal;
   const fetchJson = deps.fetchJson ?? ((target: URL, requestSignal?: AbortSignal) => safeMetadataJson(target, requestSignal ? {signal: requestSignal} : {}));
   let abort: (() => void) | undefined;
   try {
@@ -86,7 +93,7 @@ export async function resolveResource(resource: ResourceIdentity, signal?: Abort
     const title = clean(info.contsNm ?? info.shrtNm);
     if (!title) throw new Error("metadata title absent");
     if (info.useYn === "N") throw new Error("resource unpublished");
-    const warnings: Warning[] = [];
+    const warnings: Warning[] = [...registry.warnings];
     const rawFiles = data.fileList ?? info.fileList;
     if (!Array.isArray(rawFiles)) throw new Error("metadata file list absent");
     const attachments = rawFiles.slice(0, 100).map(file => attachmentFrom(file, resource.id, warnings)).filter((file): file is ResolvedAttachment => !!file);
@@ -99,6 +106,7 @@ export async function resolveResource(resource: ResourceIdentity, signal?: Abort
   } catch {
     return {resource, attachments: [], warnings: [{code: combined.aborted ? "attachment_metadata_timeout" : "attachment_metadata_unavailable", message: "공식 상세·첨부 메타데이터를 확인하지 못했습니다. 검색 결과와 원문 링크는 유지합니다."}]};
   } finally {
+    clearTimeout(timer);
     if (abort) combined.removeEventListener("abort", abort);
   }
 }
