@@ -3,6 +3,7 @@ import type { AchievementLevelValue, AchievementRecord, DocumentProfile, Warning
 import type { RawBlock, ParsedDocument } from "../intermediate/blocks.js";
 import { tableRows } from "../intermediate/tables.js";
 import { evidence, field, uniqueEvidence } from "./evidence.js";
+import { codeField, gradeField } from "./normalize.js";
 import { codePattern, headers, knownLevel, documentProfile } from "./profile.js";
 
 type Context = Partial<Pick<AchievementRecord, "grade" | "subject" | "domain">>;
@@ -26,7 +27,7 @@ function standard(block: RawBlock | undefined, hash: string): Pick<RecordFields,
   if (!match) return block.text.trim() ? { achievementStandardText: field(block, hash) } : {};
   const text = block.text.slice(match.index + match[0].length).trim();
   return {
-    achievementStandardCode: field(block, hash, match[0]),
+    achievementStandardCode: codeField(block, hash, match[0]),
     ...(text ? { achievementStandardText: field(block, hash, text) } : {}),
   };
 }
@@ -42,7 +43,7 @@ function updateContext(block: RawBlock, previous: Context, hash: string, warning
   if (new Set(grades.map(match => match[0])).size > 1) {
     delete next.grade;
     warnings.push({ code: "AMBIGUOUS_GRADE_CONTEXT", message: "머리글에 학년이 여러 개 있어 단일 학년으로 연결하지 않았습니다." });
-  } else if (grade) next.grade = field(block, hash, grade[0]);
+  } else if (grade) next.grade = gradeField(block, hash, grade[0]);
   const subjects = [...block.text.matchAll(new RegExp(subjectPattern.source, "gu"))];
   const subject = subjects[0]?.[1];
   if (new Set(subjects.map(match => match[1])).size > 1) {
@@ -95,12 +96,12 @@ function extractTable(blocks: RawBlock[], context: Context, hash: string): { rec
     const rowContext = { ...context };
     for (const key of ["grade", "subject", "domain"] as const) {
       const value = cell(key);
-      if (value?.text.trim()) rowContext[key] = field(value, hash);
+      if (value?.text.trim()) rowContext[key] = key === "grade" ? gradeField(value, hash) : field(value, hash);
     }
     const fields: RecordFields = { ...rowContext, ...standard(cell("standard") ?? cell("code"), hash) };
     const codeCell = cell("code");
     const code = codeCell && codePattern.exec(codeCell.text);
-    if (code && codeCell) fields.achievementStandardCode = field(codeCell, hash, code[0]);
+    if (code && codeCell) fields.achievementStandardCode = codeField(codeCell, hash, code[0]);
     if (header.levels.size >= 2) {
       orientations.add("levels_in_columns");
       for (const [column, labelCell] of header.levels) {

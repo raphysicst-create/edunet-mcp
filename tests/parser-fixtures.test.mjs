@@ -131,3 +131,23 @@ test('parser applies block and byte limits',async()=>{
   await assert.rejects(parseDocument(syntheticHwp(),'hwp',{maxBlocks:3}),e=>e.code==='OUTPUT_LIMIT');
   await assert.rejects(parseDocument(new Uint8Array(10*1024*1024+1),'pdf'),e=>e.code==='INPUT_TOO_LARGE');
 });
+
+test('explicit single grades normalize to query aliases while raw evidence stays unchanged',()=>{
+  for(const [raw,alias] of [['초등학교 6학년','초6'],['중학교 1학년','중1'],['고등학교 3학년','고3']]){
+    const document=doc([heading(`${raw} 과학`,1),paragraph('상: 원문 수준 설명',2)]);
+    const records=extractAchievements(document,'hash').records;
+    assert.equal(records[0].grade.raw,raw);
+    assert.equal(records[0].grade.normalized,alias);
+    assertEvidence(document,records,'hash');
+  }
+  const document=doc(table([['학년','성취기준 코드','성취수준','설명'],['중학교  1 학년','[ 9과01-01 ]','상','첫 설명'],['중학교 1~2학년군','[9과01-01]','중','둘째 설명'],['1학년','[9과01-01]','하','셋째 설명'],['중학교 4학년','[9과01-01]','하','넷째 설명']]));
+  const records=extractAchievements(document,'hash').records;
+  assert.equal(records[0].grade.raw,'중학교  1 학년');
+  assert.equal(records[0].grade.normalized,'중1');
+  assert.equal(records[0].achievementStandardCode.raw,'[ 9과01-01 ]');
+  assert.equal(records[0].achievementStandardCode.normalized,'[9과01-01]');
+  assert.equal(records[1].grade.normalized,'중학교 1~2학년군');
+  assert.equal(records[2].grade.normalized,'1학년');
+  assert.equal(records[3].grade.normalized,'중학교 4학년');
+  assertEvidence(document,records,'hash');
+});
