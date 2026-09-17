@@ -1,0 +1,35 @@
+{
+  "name": "edunet-mcp",
+  "version": "1.0.0-rc.1",
+  "private": true,
+  "description": "에듀넷 교육자료 검색 로컬 MCP 서버",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "bin": {
+    "edunet-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node --env-file-if-exists=.env dist/index.js",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "check": "npm run typecheck && npm test",
+    "eval:contract": "npm run build && node evals/contract.mjs",
+    "eval:ai": "npm run build && node evals/ai.mjs",
+    "eval:live": "npm run build && node --env-file-if-exists=.env evals/live.mjs",
+    "verify:live": "npm run build && node --env-file=.env scripts/verify-live.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "fast-xml-parser": "5.11.1",
+    "kordoc": "4.14.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "22.20.3",
+    "typescript": "7.0.2"
+  }
+}

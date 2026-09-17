@@ -1,0 +1,16 @@
+[mcp_servers.edunet]
+command = 'C:/Users/USER/AppData/Local/Programs/node-v24.18.0-win-x64/node.exe'
+args = ['--env-file=C:/Users/USER/Desktop/develop/edunet-mcp/.env', 'C:/Users/USER/Desktop/develop/edunet-mcp/dist/index.js']
+cwd = 'C:/Users/USER/Desktop/develop/edunet-mcp'
+startup_timeout_sec = 20
+tool_timeout_sec = 60
+enabled = true
+enabled_tools = ['search_edunet']
+
+[mcp_servers.kordoc]
+command = 'C:/Users/USER/AppData/Local/Programs/node-v24.18.0-win-x64/node.exe'
+args = ['C:/Users/USER/Desktop/develop/edunet-mcp/node_modules/kordoc/dist/mcp.js']
+cwd = 'C:/Users/USER/Desktop/develop/edunet-mcp'
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+enabled = true

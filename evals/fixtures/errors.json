@@ -1,0 +1,11 @@
+{
+  "kind": "synthetic_error_fixtures",
+  "description": "실제 API 오류를 캡처한 자료가 아닌 합성 입력입니다.",
+  "cases": [
+    { "id": "auth-401", "status": 401, "body": "synthetic authentication failure", "code": "AUTHENTICATION" },
+    { "id": "auth-403", "status": 403, "body": "synthetic forbidden", "code": "AUTHENTICATION" },
+    { "id": "malformed-xml", "status": 200, "body": "<search>", "code": "INVALID_RESPONSE" },
+    { "id": "wrong-structure", "status": 200, "body": "<html>synthetic login</html>", "code": "INVALID_RESPONSE" },
+    { "id": "body-delay", "bodyDelay": true, "code": "TIMEOUT" }
+  ]
+}

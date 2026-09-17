@@ -1,0 +1,252 @@
+{
+  "verifiedAt": "2026-09-16T02:43:06.134Z",
+  "client": "Codex CLI 0.154.0-alpha.6.2 (bundled with desktop app)",
+  "projectConfig": ".codex/config.toml",
+  "threadId": "01a0a815-7b3f-7f50-b510-210757e4a826",
+  "scope": "manual client connection smoke, not evals",
+  "checks": {
+    "mcpCallsSucceeded": true,
+    "categoryChanged": true,
+    "nextPagePreservedConditions": true,
+    "allAnswerURLsFromTool": true,
+    "apiKeyNotInTranscript": true
+  },
+  "turns": [
+    {
+      "number": 1,
+      "model": "gpt-5.6-sol",
+      "prompt": "중학교 2학년 과학 광합성 자료를 에듀넷에서 찾아줘. 한 페이지에 3건만 보여줘.",
+      "calls": [
+        {
+          "arguments": {
+            "query": "중학교 2학년 과학 광합성",
+            "page": 1,
+            "pageSize": 3,
+            "searchType": "title_summary",
+            "sort": "relevance"
+          },
+          "pagination": {
+            "page": 1,
+            "pageSize": 3,
+            "returnedCount": 0,
+            "totalCount": 0,
+            "hasNextPage": false,
+            "nextPage": null,
+            "pageLimitReached": false
+          },
+          "conditions": {
+            "query": "중학교 2학년 과학 광합성",
+            "categories": [],
+            "sort": "relevance",
+            "searchType": "title_summary",
+            "page": 1,
+            "pageSize": 3
+          },
+          "items": []
+        },
+        {
+          "arguments": {
+            "query": "중2 과학 광합성",
+            "page": 1,
+            "pageSize": 3,
+            "searchType": "title_summary",
+            "sort": "relevance"
+          },
+          "pagination": {
+            "page": 1,
+            "pageSize": 3,
+            "returnedCount": 0,
+            "totalCount": 0,
+            "hasNextPage": false,
+            "nextPage": null,
+            "pageLimitReached": false
+          },
+          "conditions": {
+            "query": "중2 과학 광합성",
+            "categories": [],
+            "sort": "relevance",
+            "searchType": "title_summary",
+            "page": 1,
+            "pageSize": 3
+          },
+          "items": []
+        },
+        {
+          "arguments": {
+            "query": "광합성",
+            "page": 1,
+            "pageSize": 3,
+            "searchType": "title_summary",
+            "sort": "relevance"
+          },
+          "pagination": {
+            "page": 1,
+            "pageSize": 3,
+            "returnedCount": 3,
+            "totalCount": 111,
+            "hasNextPage": true,
+            "nextPage": 2,
+            "pageLimitReached": false
+          },
+          "conditions": {
+            "query": "광합성",
+            "categories": [],
+            "sort": "relevance",
+            "searchType": "title_summary",
+            "page": 1,
+            "pageSize": 3
+          },
+          "items": [
+            {
+              "id": "2516655",
+              "title": "광합성",
+              "content": "광합성 , 광합성 에 필요한 물질과 생성되는 물질",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/clssStdDt/view/150/2516655?sbjtClsf=77433&srvcClsf=59598&contents_openapi=search",
+              "category": "주제학습"
+            },
+            {
+              "id": "11704",
+              "title": "식물은 광합성 으로 만든 녹말을 어떤 방식으로 저장할까?",
+              "content": "[ 광합성 - 광합성 ] 식물은 광합성 으로 만든 녹말을 어떤 방식으로 저장할까? 광합성 의 산물 Photosynthetic Product 광합성 산물의 이동과 이용 광합성 결과로 만들어지는 광합성 산물은 포도당이며, 포도당이 만들어지는 과정 중에 산소가 함께 만들어집니다. 대부분의 녹색 식물에서는 포도당이 만들어 ...",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/contsMvGllry/view/154/11704?contents_openapi=search",
+              "category": "주제별 학습자료"
+            },
+            {
+              "id": "2516659",
+              "title": "식물의 호흡과 광합성",
+              "content": "식물의 호흡, 식물의 호흡과 광합성",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/clssStdDt/view/150/2516659?sbjtClsf=77433&srvcClsf=59598&contents_openapi=search",
+              "category": "주제학습"
+            }
+          ]
+        }
+      ],
+      "answer": "에듀넷에서 ‘광합성’을 검색한 1페이지 결과입니다. 요청대로 3건만 표시합니다.\n\n1. [광합성](https://www.edunet.net/clssStdDt/view/150/2516655?sbjtClsf=77433&srvcClsf=59598&contents_openapi=search)  \n   광합성에 필요한 물질과 생성되는 물질 — 주제학습\n\n2. [식물은 광합성으로 만든 녹말을 어떤 방식으로 저장할까?](https://www.edunet.net/contsMvGllry/view/154/11704?contents_openapi=search)  \n   광합성 산물의 이동과 이용 — 주제별 학습자료\n\n3. [식물의 호흡과 광합성](https://www.edunet.net/clssStdDt/view/150/2516659?sbjtClsf=77433&srvcClsf=59598&contents_openapi=search)  \n   식물의 호흡과 광합성 — 주제학습\n\n총 111건이며 다음 페이지가 있습니다. ‘중학교 2학년 과학 광합성’으로는 결과가 없어 ‘광합성’으로 넓혀 검색했으므로, 각 자료의 정확한 학년 적합성은 원문 확인이 필요합니다. 검색 메타데이터와 발췌만 확인했으며 원문·첨부파일은 열람하지 않았습니다."
+    },
+    {
+      "number": 2,
+      "model": "gpt-6-astra",
+      "prompt": "평가자료만 보여줘. 한 페이지에 3건씩 유지해줘.",
+      "calls": [
+        {
+          "arguments": {
+            "query": "광합성",
+            "categories": [
+              "evl_data"
+            ],
+            "page": 1,
+            "pageSize": 3,
+            "searchType": "title_summary",
+            "sort": "relevance"
+          },
+          "pagination": {
+            "page": 1,
+            "pageSize": 3,
+            "returnedCount": 3,
+            "totalCount": 5,
+            "hasNextPage": true,
+            "nextPage": 2,
+            "pageLimitReached": false
+          },
+          "conditions": {
+            "query": "광합성",
+            "categories": [
+              "evl_data"
+            ],
+            "sort": "relevance",
+            "searchType": "title_summary",
+            "page": 1,
+            "pageSize": 3
+          },
+          "items": [
+            {
+              "id": "2516662",
+              "title": "광합성 산물의 저장과 이용",
+              "content": "광합성 산물의 생성과 이동, 광합성 산물의 저장과 이용",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/clssStdDt/view/150/2516662?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search",
+              "category": "평가자료"
+            },
+            {
+              "id": "2516656",
+              "title": "광합성",
+              "content": "광합성 , 광합성 에 필요한 물질과 생성되는 물질",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/clssStdDt/view/150/2516656?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search",
+              "category": "평가자료"
+            },
+            {
+              "id": "2516660",
+              "title": "식물의 호흡과 광합성",
+              "content": "식물의 호흡, 식물의 호흡과 광합성",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/clssStdDt/view/150/2516660?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search",
+              "category": "평가자료"
+            }
+          ]
+        }
+      ],
+      "answer": "‘광합성’ **평가자료 총 5건 중 1페이지 3건**입니다.\n\n1. [광합성 산물의 저장과 이용](https://www.edunet.net/clssStdDt/view/150/2516662?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search)  \n   광합성 산물의 생성·이동·저장·이용\n\n2. [광합성](https://www.edunet.net/clssStdDt/view/150/2516656?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search)  \n   광합성에 필요한 물질과 생성되는 물질\n\n3. [식물의 호흡과 광합성](https://www.edunet.net/clssStdDt/view/150/2516660?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search)  \n   식물의 호흡과 광합성\n\n다음은 2페이지입니다. 중2 대상 여부는 검색 정보만으로 확인되지 않았으며, **원문·첨부파일은 열람하지 않았습니다.**"
+    },
+    {
+      "number": 3,
+      "model": "gpt-5.6-sol",
+      "prompt": "다음 페이지 보여줘.",
+      "calls": [
+        {
+          "arguments": {
+            "query": "광합성",
+            "categories": [
+              "evl_data"
+            ],
+            "page": 2,
+            "pageSize": 3,
+            "searchType": "title_summary",
+            "sort": "relevance"
+          },
+          "pagination": {
+            "page": 2,
+            "pageSize": 3,
+            "returnedCount": 2,
+            "totalCount": 5,
+            "hasNextPage": false,
+            "nextPage": null,
+            "pageLimitReached": false
+          },
+          "conditions": {
+            "query": "광합성",
+            "categories": [
+              "evl_data"
+            ],
+            "sort": "relevance",
+            "searchType": "title_summary",
+            "page": 2,
+            "pageSize": 3
+          },
+          "items": [
+            {
+              "id": "2516658",
+              "title": "환경 요인과 광합성 의 관계",
+              "content": "광합성 에 영향을 미치는 요인",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/clssStdDt/view/150/2516658?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search",
+              "category": "평가자료"
+            },
+            {
+              "id": "2516510",
+              "title": "식물의 구조와 기능(2)_잎의 구조와 하는 일",
+              "content": "잎의 구조와 하는 일, 증산작용과 광합성",
+              "contentTruncated": false,
+              "url": "https://www.edunet.net/clssStdDt/view/149/2516510?sbjtClsf=100148&srvcClsf=59599&contents_openapi=search",
+              "category": "평가자료"
+            }
+          ]
+        }
+      ],
+      "answer": "‘광합성’ 평가자료 **2페이지**입니다. 총 5건 중 남은 2건입니다.\n\n4. [환경 요인과 광합성의 관계](https://www.edunet.net/clssStdDt/view/150/2516658?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search)  \n   광합성에 영향을 미치는 요인\n\n5. [식물의 구조와 기능(2)―잎의 구조와 하는 일](https://www.edunet.net/clssStdDt/view/149/2516510?sbjtClsf=100148&srvcClsf=59599&contents_openapi=search)  \n   잎의 구조와 하는 일, 증산작용과 광합성\n\n다음 페이지는 없습니다. 검색 메타데이터와 발췌만 확인했으며, **원문·첨부파일은 열람하지 않았습니다.**"
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-16T02:38:09.142Z",
+  "method": {
+    "selection": "EDUNET Search Open API v4.5, anonymous request, first three distinct linked results per category",
+    "pageProbe": "Anonymous HTTP GET with redirects enabled and a 15 second timeout",
+    "detailProbe": "Anonymous public detail API request derived from the site's shipped JavaScript; performed for all nine items",
+    "renderProbe": "Anonymous in-app browser DOM snapshot; performed for item 2516662 only",
+    "downloadProbe": "For one representative resource per item, request an anonymous temporary URL from the site's public download endpoint. Probe both the CDN URL produced by the site's shipped transformation and, for diagnostic comparison, the temporary storage URL. Fetch only bytes 0-31 with Range. Temporary signed URLs are not retained."
+  },
+  "summary": {
+    "items": 9,
+    "anonymousHttp200": 9,
+    "staticHtmlWasSpaShell": 9,
+    "anonymousDetailApiSuccess": 9,
+    "apiAttachmentMetadataPresent": 9,
+    "renderedDetailUiConfirmed": 1,
+    "representativeResourcePublicCdnBytesConfirmed": 8,
+    "representativeResourcePublicCdnFailed": 1,
+    "representativeResourceTemporaryUrlBytesConfirmed": 9
+  },
+  "items": [
+    {
+      "category": "lsn_design",
+      "categoryLabel": "수업설계",
+      "query": "수업",
+      "id": "2065756",
+      "title": "수업 만들기(우리 동네 땅따먹기 게임)",
+      "url": "https://www.edunet.net/clssStdDt/view/149/2065756?sbjtClsf=89434&srvcClsf=59602&contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatched": true, "contentLength": 0, "fileCount": 3 },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "바슬즐_1, 2학년_ 수업 만들기(우리 동네 땅따먹기 게임).hwp", "extension": "hwp" },
+        { "name": "바슬즐_1, 2학년_ 수업 만들기(우리 동네 땅따먹기 게임) 활동자료3 우리 동네 땅따먹기 게임 활동지.hwp", "extension": "hwp" },
+        { "name": "바슬즐_1, 2학년_ 수업 만들기(우리 동네 땅따먹기 게임) 활동자료2 우리 동네 표현 활동지.hwp", "extension": "hwp" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 2178963, "httpStatus": 206, "contentRange": "bytes 0-31/98816", "contentType": "binary/octet-stream", "receivedBytes": 32, "magicHex": "d0cf11e0a1b11ae1", "formatEvidence": "OLE compound document, consistent with legacy HWP" }
+    },
+    {
+      "category": "lsn_design",
+      "categoryLabel": "수업설계",
+      "query": "수업",
+      "id": "2065778",
+      "title": "수업 만들기(우리 동네 표지판 만들기)",
+      "url": "https://www.edunet.net/clssStdDt/view/149/2065778?sbjtClsf=89434&srvcClsf=59602&contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatchedIgnoringWhitespace": true, "contentLength": 0, "fileCount": 3 },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "바슬즐_1, 2학년_ 수업 만들기(우리 동네 표지판 만들기).hwp", "extension": "hwp" },
+        { "name": "바슬즐_1, 2학년_ 수업 만들기(우리 동네 표지판 만들기) 활동자료2 우리 동네 표지판.hwp", "extension": "hwp" },
+        { "name": "바슬즐_1, 2학년_ 수업 만들기(우리 동네 표지판 만들기) 활동자료1 한 문장 소개 주제어.hwp", "extension": "hwp" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 2178985, "httpStatus": 206, "contentRange": "bytes 0-31/11264", "contentType": "binary/octet-stream", "receivedBytes": 32, "magicHex": "d0cf11e0a1b11ae1", "formatEvidence": "OLE compound document, consistent with legacy HWP" }
+    },
+    {
+      "category": "lsn_design",
+      "categoryLabel": "수업설계",
+      "query": "수업",
+      "id": "2074372",
+      "title": "[ 수업 지도안] 일이 일어난 차례를 생각하며 말하기",
+      "url": "https://www.edunet.net/clssStdDt/view/149/2074372?sbjtClsf=89432&srvcClsf=59602&contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatchedIgnoringWhitespace": true, "contentLength": 0, "fileCount": 4 },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "초등_1, 2학년군_국어_01. 수업 지도안.hwp", "extension": "hwp" },
+        { "name": "초등_1, 2학년군_국어_02.PPT.pptx", "extension": "pptx" },
+        { "name": "초등_1, 2학년군_국어_03.활동지.hwp", "extension": "hwp" },
+        { "name": "초등_1, 2학년군_국어_04.평가지.hwp", "extension": "hwp" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 2187986, "httpStatus": 206, "contentRange": "bytes 0-31/95232", "contentType": "binary/octet-stream", "receivedBytes": 32, "magicHex": "d0cf11e0a1b11ae1", "formatEvidence": "OLE compound document, consistent with legacy HWP" }
+    },
+    {
+      "category": "evl_data",
+      "categoryLabel": "평가자료",
+      "query": "광합성",
+      "id": "2516662",
+      "title": "광합성 산물의 저장과 이용",
+      "url": "https://www.edunet.net/clssStdDt/view/150/2516662?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatched": true, "contentLength": 30, "fileCount": 4 },
+      "renderedDetail": {
+        "status": "confirmed_anonymous",
+        "titleVisible": true,
+        "loginControlsVisibleButNotRequired": true,
+        "previewVisible": true,
+        "previewObserved": "2-page HWP preview with assessment text",
+        "attachmentUiCount": 4,
+        "attachmentUiNamesMatchApi": true
+      },
+      "attachmentsFromSearchApi": [
+        { "name": "26.[중2_과학]평가지_ 광합성 산물의 저장과 이용.hwp", "extension": "hwp" },
+        { "name": "26.[중2_과학]평가지_ 광합성 산물의 저장과 이용.pdf", "extension": "pdf" },
+        { "name": "26.[중2_과학]해설지_ 광합성 산물의 저장과 이용.hwp", "extension": "hwp" },
+        { "name": "26.[중2_과학]해설지_ 광합성 산물의 저장과 이용.pdf", "extension": "pdf" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 3595178, "httpStatus": 206, "contentRange": "bytes 0-31/343040", "contentType": "application/octet-stream", "receivedBytes": 32, "magicHex": "d0cf11e0a1b11ae1", "formatEvidence": "OLE compound document, consistent with legacy HWP" },
+      "additionalDownloadEvidence": { "fileRscId": 3595179, "httpStatus": 206, "contentRange": "bytes 0-1023/113952", "contentType": "application/pdf", "receivedBytes": 1024, "magicAscii": "%PDF-1.4" }
+    },
+    {
+      "category": "evl_data",
+      "categoryLabel": "평가자료",
+      "query": "광합성",
+      "id": "2516656",
+      "title": "광합성",
+      "url": "https://www.edunet.net/clssStdDt/view/150/2516656?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatched": true, "contentLength": 25, "fileCount": 4 },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "23.[중2_과학]평가지_ 광합성 .hwp", "extension": "hwp" },
+        { "name": "23.[중2_과학]평가지_ 광합성 .pdf", "extension": "pdf" },
+        { "name": "23.[중2_과학]해설지_ 광합성 .hwp", "extension": "hwp" },
+        { "name": "23.[중2_과학]해설지_ 광합성 .pdf", "extension": "pdf" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 3595172, "httpStatus": 206, "contentRange": "bytes 0-31/342528", "contentType": "application/octet-stream", "receivedBytes": 32, "magicHex": "d0cf11e0a1b11ae1", "formatEvidence": "OLE compound document, consistent with legacy HWP" }
+    },
+    {
+      "category": "evl_data",
+      "categoryLabel": "평가자료",
+      "query": "광합성",
+      "id": "2516660",
+      "title": "식물의 호흡과 광합성",
+      "url": "https://www.edunet.net/clssStdDt/view/150/2516660?sbjtClsf=77433&srvcClsf=59599&contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatched": true, "contentLength": 19, "fileCount": 4 },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "25.[중2_과학]평가지_식물의 호흡과 광합성 .hwp", "extension": "hwp" },
+        { "name": "25.[중2_과학]평가지_식물의 호흡과 광합성 .pdf", "extension": "pdf" },
+        { "name": "25.[중2_과학]해설지_식물의 호흡과 광합성 .hwp", "extension": "hwp" },
+        { "name": "25.[중2_과학]해설지_식물의 호흡과 광합성 .pdf", "extension": "pdf" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 3595176, "httpStatus": 206, "contentRange": "bytes 0-31/680448", "contentType": "application/octet-stream", "receivedBytes": 32, "magicHex": "d0cf11e0a1b11ae1", "formatEvidence": "OLE compound document, consistent with legacy HWP" }
+    },
+    {
+      "category": "ednwkst",
+      "categoryLabel": "주제별 학습자료",
+      "query": "광합성",
+      "id": "11704",
+      "title": "식물은 광합성 으로 만든 녹말을 어떤 방식으로 저장할까?",
+      "url": "https://www.edunet.net/contsMvGllry/view/154/11704?contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatchedIgnoringWhitespace": true, "contentLength": 2564, "fileCount": 7, "resourceKind": "content_assets" },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "m1_sc_46_03_image01.jpg", "extension": "jpg" },
+        { "name": "m1_sc_46_03_image02.jpg", "extension": "jpg" },
+        { "name": "m1_sc_46_03_image03.jpg", "extension": "jpg" },
+        { "name": "m1_sc_46_03_image04.jpg", "extension": "jpg" },
+        { "name": "m1_sc_46_03_image05.jpg", "extension": "jpg" },
+        { "name": "m1_sc_46_03_image06.jpg", "extension": "jpg" },
+        { "name": "m1_sc_46_03_image07.jpg", "extension": "jpg" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 13594, "httpStatus": 206, "contentRange": "bytes 0-31/96445", "contentType": "image/jpeg", "receivedBytes": 32, "magicHex": "ffd8ffe113b94578", "formatEvidence": "JPEG" }
+    },
+    {
+      "category": "ednwkst",
+      "categoryLabel": "주제별 학습자료",
+      "query": "광합성",
+      "id": "34345",
+      "title": "물속에 사는 작은 생물을 만나다(1)",
+      "url": "https://www.edunet.net/contsMvGllry/view/154/34345?contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatched": true, "contentLength": 2874, "fileCount": 8, "resourceKind": "content_assets" },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "e5_sc_24_01_video02.mp4", "extension": "mp4" },
+        { "name": "e5_sc_24_01_video03.mp4", "extension": "mp4" },
+        { "name": "e5_sc_24_01_video01.mp4", "extension": "mp4" },
+        { "name": "e5_sc_24_01_image03.jpg", "extension": "jpg" },
+        { "name": "e5_sc_24_01_image01.jpg", "extension": "jpg" },
+        { "name": "e5_sc_24_01_image02.jpg", "extension": "jpg" },
+        { "name": "e5_sc_24_01_video02_exported.mp4", "extension": "mp4" },
+        { "name": "e5_sc_24_01_video03_exported.mp4", "extension": "mp4" }
+      ],
+      "downloadAccess": {
+        "status": "public_cdn_failed_but_temporary_url_confirmed",
+        "fileRscId": 40040,
+        "publicCdn": { "httpStatus": 403, "contentType": "text/html", "receivedBytes": 0 },
+        "temporaryStorageUrl": { "httpStatus": 206, "contentRange": "bytes 0-31/3251718", "contentType": "video/mp4", "receivedBytes": 32, "magicHex": "0000002066747970", "formatEvidence": "ISO BMFF/MP4" },
+        "interpretation": "The anonymously issued temporary URL returned real MP4 bytes. The site's canonical CDN rewrite returned 403 for this historical video; this does not establish that login is required."
+      }
+    },
+    {
+      "category": "ednwkst",
+      "categoryLabel": "주제별 학습자료",
+      "query": "광합성",
+      "id": "2048924",
+      "title": "바다의 선물, 갯벌에 대해 알아보아요",
+      "url": "https://www.edunet.net/contsMvGllry/view/154/2048924?contents_openapi=search",
+      "anonymousHttp": { "status": 200, "contentType": "text/html; charset=UTF-8", "redirected": false, "staticVisibleText": "에듀넷", "classification": "spa_shell" },
+      "detailApi": { "status": 200, "success": true, "titleMatched": true, "contentLength": 3312, "fileCount": 14, "resourceKind": "content_assets" },
+      "renderedDetail": { "status": "not_checked_in_ui" },
+      "attachmentsFromSearchApi": [
+        { "name": "e6_sci_34_18_img04_05.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img05.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img06_01.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img06_02.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_mov01.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_mov01.mp4", "extension": "mp4" },
+        { "name": "e6_sci_34_18_img01.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img01_01.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img01_02.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img04_01.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img04_02.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img04_03.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18_img04_04.jpg", "extension": "jpg" },
+        { "name": "e6_sci_34_18.pdf", "extension": "pdf" }
+      ],
+      "downloadAccess": { "status": "representative_resource_confirmed", "fileRscId": 2161299, "httpStatus": 206, "contentRange": "bytes 0-31/39495", "contentType": "image/jpeg", "receivedBytes": 32, "magicHex": "ffd8ffe100184578", "formatEvidence": "JPEG" }
+    }
+  ]
+}

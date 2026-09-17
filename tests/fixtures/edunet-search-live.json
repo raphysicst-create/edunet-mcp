@@ -1,0 +1,24 @@
+{
+  "capturedAt": "2026-09-16T01:33:39.629Z",
+  "kind": "redacted_live_api_response",
+  "input": {
+    "query": "광합성",
+    "categories": [],
+    "sort": "relevance",
+    "searchType": "title_summary",
+    "page": 1,
+    "pageSize": 3
+  },
+  "endpoint": "https://api.edunet.net/search/searchApi/search",
+  "status": 200,
+  "contentType": "application/xml;charset=UTF-8",
+  "originalEncoding": "utf-8",
+  "storedEncoding": "utf-8",
+  "returnedCount": 3,
+  "totalCount": 111,
+  "redacted": [
+    "authentication key",
+    "registered domain"
+  ],
+  "totalCountPath": "search/totalCount"
+}
