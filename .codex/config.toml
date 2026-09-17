@@ -5,7 +5,7 @@ cwd = 'C:/Users/USER/Desktop/develop/edunet-mcp'
 startup_timeout_sec = 20
 tool_timeout_sec = 60
 enabled = true
-enabled_tools = ['search_edunet']
+enabled_tools = ['search_edunet', 'search_edunet_achievement', 'read_edunet_achievement', 'read_edunet_resource']
 
 [mcp_servers.kordoc]
 command = 'C:/Users/USER/AppData/Local/Programs/node-v24.18.0-win-x64/node.exe'

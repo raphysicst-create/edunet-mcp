@@ -63,6 +63,9 @@ test('HWP merged source evidence stays at anchor row, and simple unmerged HWP wo
   const records=extractAchievements(document,'hash').records;
   assert.deepEqual(records.map(r=>r.achievementStandardCode.evidence[0].location.row),[2,2,2]);
   assert.deepEqual(records.map(r=>r.description.evidence[0].location.row),[2,3,4]);
+  assert.equal(records[0].extraction.parserWarnings,undefined);
+  assert.ok(records[1].extraction.parserWarnings.includes('MERGED_CELL_INHERITED'));
+  assert.equal(records[1].extraction.confidence,'medium');
   assert.equal((await parseDocument(syntheticHwp({merged:false}),'hwp')).blocks.filter(b=>b.text.startsWith('[9과')).length,3);
 });
 test('PDF multi-page repeated headers are not emitted as records',async()=>{

@@ -85,10 +85,19 @@ function extractTable(blocks: RawBlock[], context: Context, hash: string): { rec
   const records: AchievementRecord[] = [];
   const orientations = new Set<DocumentProfile["tableOrientation"]>();
   let header: Header | undefined;
-  for (const [, cells] of tableRows(blocks)) {
+  for (const [row, cells] of tableRows(blocks)) {
     const candidate = detectHeader(cells);
     if (candidate) { header = candidate; continue; } // Includes repeated page headers.
     if (!header) continue;
+    const pushRecord = (record: AchievementRecord): void => {
+      const inherited = [...cells.values()].some(block => (block.rowSpan ?? 1) > 1 && block.location.row !== row
+        && record.evidence.some(span => span.location.block === block.location.block));
+      if (inherited) {
+        record.extraction.parserWarnings = [...(record.extraction.parserWarnings ?? []), "MERGED_CELL_INHERITED"];
+        record.extraction.confidence = "medium";
+      }
+      records.push(record);
+    };
     const cell = (key: string): RawBlock | undefined => {
       const column = header?.columns.get(key);
       return column === undefined ? undefined : cells.get(column);
@@ -107,7 +116,7 @@ function extractTable(blocks: RawBlock[], context: Context, hash: string): { rec
       for (const [column, labelCell] of header.levels) {
         const description = cells.get(column);
         if (!description?.text.trim() || description === labelCell) continue;
-        records.push(makeRecord({ ...fields, achievementLevel: label(labelCell, hash), description: field(description, hash) }, "table", hash));
+        pushRecord(makeRecord({ ...fields, achievementLevel: label(labelCell, hash), description: field(description, hash) }, "table", hash));
       }
     } else if (header.columns.has("level") && header.columns.has("description")) {
       orientations.add("levels_in_rows");
@@ -115,9 +124,9 @@ function extractTable(blocks: RawBlock[], context: Context, hash: string): { rec
       const description = cell("description");
       const levelHeader = header.cells.get(header.columns.get("level")!);
       if (!level?.text.trim() || !description?.text.trim()) continue;
-      records.push(makeRecord({ ...fields, achievementLevel: label(level, hash, level.text, levelHeader), description: field(description, hash) }, "table", hash));
+      pushRecord(makeRecord({ ...fields, achievementLevel: label(level, hash, level.text, levelHeader), description: field(description, hash) }, "table", hash));
     } else if (fields.achievementStandardCode && fields.achievementStandardText) {
-      records.push(makeRecord(fields, "table", hash));
+      pushRecord(makeRecord(fields, "table", hash));
     }
   }
   return { records, orientations, matched: header !== undefined };
@@ -170,6 +179,7 @@ export function extractAchievements(document: ParsedDocument, sourceHash: string
   if (records.some(record => !record.achievementStandardCode)) warnings.push({ code: "STANDARD_CODE_NOT_PRESENT", message: "일부 레코드에 명시된 성취기준 코드가 없어 코드를 채우지 않았습니다." });
   if (records.some(record => !record.grade)) warnings.push({ code: "GRADE_NOT_PRESENT", message: "일부 레코드에 연결할 수 있는 명시된 학년 근거가 없습니다." });
   if (records.some(record => !record.subject)) warnings.push({ code: "SUBJECT_NOT_PRESENT", message: "일부 레코드에 연결할 수 있는 명시된 과목 근거가 없습니다." });
+  if (records.some(record => record.extraction.parserWarnings?.includes("MERGED_CELL_INHERITED"))) warnings.push({ code: "MERGED_CELL_INHERITED", message: "일부 필드는 parser가 제공한 병합 셀 범위를 상속했습니다. 근거 위치는 원래 셀의 위치입니다." });
   const orientation = orientations.size === 1 ? [...orientations][0]! : "unknown";
   return { records, documentProfile: documentProfile(orientation, matchedBy), warnings };
 }

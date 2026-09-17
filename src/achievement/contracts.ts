@@ -11,7 +11,7 @@ const ref = z.string().min(1).max(16000);
 export const readAchievementInputSchema = z.strictObject({
   achievementRef: ref, attachmentRef: ref.optional(), grade: filter.optional(), subject: filter.optional(),
   achievementStandardCode: filter.optional(), levelLabel: filter.optional(), cursor: ref.optional(),
-  maxItems: z.number().int().min(1).max(100).default(50), maxChars: z.number().int().min(500).max(20000).default(8000),
+  maxItems: z.number().int().min(1).max(100).default(50).describe("반환 레코드/블록 수. 첨부 목록은 한 번에 최대 20개이며 cursor로 이어 읽습니다."), maxChars: z.number().int().min(500).max(20000).default(8000).describe("records와 rawBlocks의 JSON 문자 예산. 제한된 출처·경고·첨부 목록 메타데이터는 별도입니다. 큰 원문 블록은 charStart/charEnd를 보존하여 나눕니다."),
 });
 export const readResourceInputSchema = readAchievementInputSchema.omit({achievementRef:true,grade:true,subject:true,achievementStandardCode:true,levelLabel:true}).extend({resourceRef:ref});
 export type SearchAchievementInput = z.infer<typeof searchAchievementInputSchema>;

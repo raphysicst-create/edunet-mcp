@@ -14,6 +14,7 @@ test('signed references survive restart, reject tampering, wrong purpose, expiry
   now+=1000;assert.throws(()=>a.verify(token,'achievement'));
   now=-100000;assert.throws(()=>a.verify(token,'achievement'));
   assert.throws(()=>new ReferenceCodec('short'));
+  assert.throws(()=>a.issue('resource',{resource:'한'.repeat(10000)}));
 });
 
 test('achievement inputs reject arbitrary URLs, files, unknown fields and unbounded responses',()=>{

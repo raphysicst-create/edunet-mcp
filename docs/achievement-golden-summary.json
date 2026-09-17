@@ -1,0 +1,135 @@
+{
+  "scope": "Offline synthetic achievement semantics and public non-curriculum layout smoke fixtures. Not a release certification.",
+  "humanReviewed": false,
+  "hwpxDefaultEnabled": false,
+  "cases": 8,
+  "passed": 8,
+  "metrics": {
+    "fields": {
+      "grade": {
+        "tp": 13,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "subject": {
+        "tp": 13,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "domain": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "achievementStandardCode": {
+        "tp": 13,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "achievementStandardText": {
+        "tp": 13,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "achievementLevel": {
+        "tp": 15,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "description": {
+        "tp": 15,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      }
+    },
+    "codeExactAccuracy": 1,
+    "levelRawLabelFidelity": 1,
+    "evidenceAttachmentRate": 1,
+    "unsupportedInferenceRate": 0,
+    "formatParseSuccess": {
+      "pdf": {
+        "success": 2,
+        "total": 2
+      },
+      "hwp": {
+        "success": 2,
+        "total": 2
+      },
+      "hwpx": {
+        "success": 2,
+        "total": 2
+      }
+    },
+    "p95ParseAndExtractLatencyMs": 1350.2612,
+    "candidateRecallAtK": null,
+    "verifiedDocumentRate": null
+  },
+  "unmeasured": [
+    "Live EDUNET candidate recall and verified-document rate",
+    "Human educational-domain review",
+    "Production p95 and worker-fault search availability (covered separately by tests)"
+  ],
+  "fixtureCases": [
+    {
+      "id": "pdf-rows",
+      "synthetic": true,
+      "pass": true
+    },
+    {
+      "id": "pdf-columns",
+      "synthetic": true,
+      "pass": true
+    },
+    {
+      "id": "hwp-merged",
+      "synthetic": true,
+      "pass": true
+    },
+    {
+      "id": "hwpx-rows-experimental",
+      "synthetic": true,
+      "pass": true
+    },
+    {
+      "id": "public-hwp-layout-only",
+      "synthetic": false,
+      "pass": true
+    },
+    {
+      "id": "public-hwpx-layout-only",
+      "synthetic": false,
+      "pass": true
+    },
+    {
+      "id": "explicit-paragraph-domain",
+      "synthetic": true,
+      "pass": true
+    },
+    {
+      "id": "code-free-descriptive-levels",
+      "synthetic": true,
+      "pass": true
+    }
+  ]
+}

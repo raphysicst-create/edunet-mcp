@@ -12,7 +12,9 @@ export class ReferenceCodec {
   }
   issue(kind:ReferenceKind, data:Record<string,unknown>, ttlMs=this.ttlMs):string {
     const body = Buffer.from(JSON.stringify({v:1,kind,aud:"edunet-achievement",iat:this.now(),exp:this.now()+Math.min(ttlMs, this.ttlMs),nonce:randomBytes(12).toString("base64url"),data})).toString("base64url");
-    return `${body}.${this.sign(body)}`;
+    const token=`${body}.${this.sign(body)}`;
+    if(token.length>16000) throw new ReferenceError();
+    return token;
   }
   verify(token:string, kind:ReferenceKind):Record<string,unknown> {
     try {
