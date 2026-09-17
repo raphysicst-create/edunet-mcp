@@ -85,6 +85,18 @@ HWPX의 공개 템플릿은 파일 구조를 확인하는 smoke fixture다. 실�
 
 ## 검증 및 출시 게이트
 
+2026-09-18 KST, Node `v24.18.0`, Windows에서 확인했다. 구현 통합 커밋은 `2418da2`이며 아래 결과는 출시 전 자동·연결 검증이다.
+
+| 검증 | 결과 |
+|---|---|
+| `npm run check` | 타입 검사 통과, offline **118/118** |
+| `npm run eval:contract -- --out evals/results/contract-achievement-final.json` | 기존 eval 포함 **181/181** |
+| `npm run eval:achievement` | authored golden 및 공개 layout 표본 **8/8**, raw label fidelity·evidence 100%, unsupported inference 0% |
+| `npm run verify:achievement:public` | 실제 공개 PDF/HWP **2/2** 다운로드·Worker·텍스트 파싱 통과. 성취수준 레코드 0개이므로 `metadata_only` |
+| 인증된 기존 검색 live 및 실제 교육자료 품질 | API 키·교육 도메인 검토가 없어 미실행 |
+
+Golden 점수의 상세 범위와 미측정 지표는 [측정 요약](achievement-golden-summary.json)을 참고한다. 완전한 expected/actual 비교는 실행 후 `evals/results/achievement-latest.json`에 생성된다. raw label fidelity 등 수치를 실제 교육자료 전체의 품질로 일반화하지 않는다.
+
 기존 기준선은 [achievement-baseline.md](achievement-baseline.md), parser fixture 출처·라이선스는 [fixture README](../tests/fixtures/achievement/README.md)와 `tests/fixtures/achievement/public/`에 기록한다. 새로운 자동 검증은 서명/만료/소속, SSRF/리디렉션/DNS 재바인딩, 압축 한도, 파일 위장, parser fixture, evidence/raw label fidelity, 목록·본문 cursor, Worker 장애 격리와 검색 스키마 고정을 포함한다. 실제 자식 프로세스 종료·무응답·잘못된 IPC를 주입하면서 같은 MCP 연결의 검색이 정상인지 검사한다.
 
 ```powershell

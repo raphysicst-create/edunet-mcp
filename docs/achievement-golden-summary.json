@@ -81,7 +81,7 @@
         "total": 2
       }
     },
-    "p95ParseAndExtractLatencyMs": 1350.2612,
+    "p95ParseAndExtractLatencyMs": 1116.3023,
     "candidateRecallAtK": null,
     "verifiedDocumentRate": null
   },
