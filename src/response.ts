@@ -26,6 +26,7 @@ interface XmlElement {
 }
 
 const utf8Bom = new Uint8Array([0xef, 0xbb, 0xbf]);
+const forbiddenXmlCharacters = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/u;
 const parser = new XMLParser({
   ignoreAttributes: false,
   parseTagValue: false,
@@ -101,7 +102,11 @@ function convertPart(value: unknown): XmlPart | null {
 }
 
 function child(element: XmlElement, name: string): XmlElement | undefined {
-  return element.children.find((part): part is XmlElement => typeof part !== "string" && part.name === name);
+  const matches = children(element, name);
+  // Only data entries repeat in the documented response. Selecting the first
+  // singleton would conceal conflicting status, counts, or source links.
+  if (matches.length > 1) return invalidResponse();
+  return matches[0];
 }
 
 function children(element: XmlElement, name: string): XmlElement[] {
@@ -117,7 +122,9 @@ function entityCodePoint(digits: string, radix: 10 | 16): string {
   if (!Number.isInteger(point) || point < 0 || point > 0x10ffff || (point >= 0xd800 && point <= 0xdfff)) {
     return invalidResponse();
   }
-  return String.fromCodePoint(point);
+  const value = String.fromCodePoint(point);
+  if (forbiddenXmlCharacters.test(value)) return invalidResponse();
+  return value;
 }
 
 function decodeHtmlEntities(value: string): string {
@@ -155,6 +162,9 @@ function firstChild(element: XmlElement, names: readonly string[]): XmlElement |
 
 function safeLink(value: string | null): string | null {
   if (value === null) return null;
+  // URL() repairs missing slashes, backslashes and raw whitespace. Returning
+  // the unrepaired input would give clients an ambiguous provenance link.
+  if (!/^https?:\/\/[^/\\]/i.test(value) || /[\u0000-\u0020\u007f\\]/u.test(value)) return null;
   try {
     const parsed = new URL(value);
     return ["http:", "https:"].includes(parsed.protocol) && !parsed.username && !parsed.password ? value : null;
@@ -203,6 +213,9 @@ export function parseEdunetResponse(
   secrets: readonly string[] = [],
 ): ParsedEdunetResponse {
   const decoded = decode(body, headers);
+  // The XML validator accepts some forbidden literal controls; do not let
+  // these enter MCP text or source links even when tag syntax is valid.
+  if (forbiddenXmlCharacters.test(decoded.text)) return invalidResponse();
   if (/<!DOCTYPE\b|<!ENTITY\b/i.test(decoded.text)) return invalidResponse();
   if (XMLValidator.validate(decoded.text, { allowBooleanAttributes: false }) !== true) return invalidResponse();
 
@@ -223,7 +236,7 @@ export function parseEdunetResponse(
   const totalResults = child(search, "totalResults");
   const dataList = totalResults === undefined ? undefined : child(totalResults, "dataList");
   if (totalResults === undefined || dataList === undefined) return invalidResponse();
-  if (dataList.children.some((part) => typeof part !== "string" && part.name !== "data")) {
+  if (dataList.children.some((part) => typeof part === "string" ? part.trim().length > 0 : part.name !== "data")) {
     return invalidResponse();
   }
   // Live v4.5 places totalCount directly under search; the manual nests it
@@ -239,8 +252,13 @@ export function parseEdunetResponse(
     if (!Number.isSafeInteger(totalCount)) return invalidResponse();
   }
 
+  const entries = children(dataList, "data");
+  // Contradictory zero/small totals must not trigger empty-result guidance
+  // while actual materials are present in the same response.
+  if (totalCount !== null && entries.length > totalCount) return invalidResponse();
+
   return {
-    items: children(dataList, "data").map((data) => parseItem(data, secrets)),
+    items: entries.map((data) => parseItem(data, secrets)),
     totalCount,
     encoding: decoded.encoding,
   };

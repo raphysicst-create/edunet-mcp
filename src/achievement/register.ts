@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { searchEdunet } from "../client.js";
 import { resolveResource } from "../resource/resolver.js";
 import { createLogger } from "../logger.js";
+import { EdunetError, publicError } from "../errors.js";
 import { loadAchievementConfig, type AchievementConfig } from "./config.js";
 import { achievementSearchResponseSchema, readAchievementInputSchema, readAchievementResponseSchema, readResourceInputSchema, readResourceResponseSchema, resourceIdentitySchema, searchAchievementInputSchema } from "./contracts.js";
 import { createWorkerGateway, type WorkerGateway } from "./gateway.js";
@@ -33,6 +34,11 @@ export function registerAchievementTools(server:McpServer,search=searchEdunet,op
       logger.debug("achievement_complete",{tool,status:result.status,latencyMs:Date.now()-start,format:attachment?.format,parserVersion:attachment?.parserVersion,profileVersion:profile?.profileVersion,recordCount:Array.isArray(result.records)?result.records.length:undefined,warningCodes:Array.isArray(result.warnings)?result.warnings.map(w=>(w as {code:string}).code).slice(0,40):[]});
       return {structuredContent:result,content:[{type:"text" as const,text:JSON.stringify(result)}]};
     } catch(error) {
+      if(error instanceof EdunetError && error.code==="ABORTED") {
+        const safe=publicError(error);
+        logger.warn("achievement_failed",{tool,code:safe.code,latencyMs:Date.now()-start});
+        return {isError:true,_meta:{"edunet/errorCode":safe.code},content:[{type:"text" as const,text:`${safe.code}: ${safe.message}`}]};
+      }
       const code=error instanceof ReferenceError?"INVALID_REFERENCE":error instanceof Error && error.message.includes("EDUNET_REFERENCE_SECRET")?"CONFIGURATION":"ACHIEVEMENT_FAILED";
       logger.warn("achievement_failed",{tool,code,latencyMs:Date.now()-start});
       return {isError:true,_meta:{"edunet/errorCode":code},content:[{type:"text" as const,text:`${code}: ${code==="INVALID_REFERENCE"?"참조가 만료되었거나 자료·첨부·이어 읽기 범위가 다릅니다. 다시 검색하세요.":code==="CONFIGURATION"?"성취수준 기능의 EDUNET_REFERENCE_SECRET 설정을 확인하세요.":"성취수준 요청을 완료하지 못했습니다. 기존 검색과 원문 링크를 이용할 수 있습니다."}`}]};

@@ -45,7 +45,8 @@ export function createWorkerGateway(options:GatewayOptions):WorkerGateway {
             finish(null,parsed);
           } catch {finish(new WorkerUnavailableError("WORKER_INVALID_RESPONSE"));}
         });
-        processChild.send({handle},error=>{if(error) finish(new WorkerUnavailableError("WORKER_CONNECTION_FAILED"));});
+        try {processChild.send({handle},error=>{if(error) finish(new WorkerUnavailableError("WORKER_CONNECTION_FAILED"));});}
+        catch {finish(new WorkerUnavailableError("WORKER_CONNECTION_FAILED"));}
       });
       if(result.status==="parse_failed" || result.status==="worker_unavailable") {
         failures++;

@@ -1,6 +1,7 @@
 import type { ResourceIdentity, ResourceDetails, ResolvedAttachment, Warning } from "../achievement/contracts.js";
 import { detailRegistryPath, inspectSourceRegistry, loadSourceRegistry, type AchievementSourceRegistryEntry } from "../achievement/source-registry.js";
 import { safeMetadataJson } from "../worker/safe-download.js";
+import { EdunetError } from "../errors.js";
 
 type JsonRecord = Record<string, unknown>;
 const object = (value: unknown): JsonRecord => value !== null && typeof value === "object" && !Array.isArray(value) ? value as JsonRecord : {};
@@ -65,6 +66,7 @@ function attachmentFrom(raw: unknown, resourceId: string, warnings: Warning[]): 
 
 /** Reads metadata only; neither document bytes nor temporary download URLs are requested. */
 export async function resolveResource(resource: ResourceIdentity, signal?: AbortSignal, deps: ResolveResourceDependencies = {}): Promise<ResourceDetails> {
+  if (signal?.aborted) throw new EdunetError("ABORTED");
   const url = resourceDetailUrl(resource);
   if (!url) return {resource, attachments: [], warnings: [{code: "detail_path_unverified", message: "공식 상세 경로 또는 자료 ID를 검증할 수 없어 첨부를 조회하지 않았습니다."}]};
   const registry = deps.registry === undefined ? loadSourceRegistry() : inspectSourceRegistry(deps.registry);
@@ -85,6 +87,7 @@ export async function resolveResource(resource: ResourceIdentity, signal?: Abort
         if (combined.aborted) abort(); else combined.addEventListener("abort", abort, {once: true});
       }),
     ]);
+    combined.throwIfAborted();
     const envelope = object(payload);
     if (envelope.success !== true) throw new Error("metadata response rejected");
     const data = object(envelope.data);
@@ -104,6 +107,7 @@ export async function resolveResource(resource: ResourceIdentity, signal?: Abort
     const snippet = [resource.snippet, metadata].filter((value, index, values) => !!value && values.indexOf(value) === index).join(" ").slice(0, 4000);
     return {resource: {...resource, title, ...(snippet ? {snippet} : {})}, attachments: unique, warnings};
   } catch {
+    if (signal?.aborted) throw new EdunetError("ABORTED");
     return {resource, attachments: [], warnings: [{code: combined.aborted ? "attachment_metadata_timeout" : "attachment_metadata_unavailable", message: "공식 상세·첨부 메타데이터를 확인하지 못했습니다. 검색 결과와 원문 링크는 유지합니다."}]};
   } finally {
     clearTimeout(timer);

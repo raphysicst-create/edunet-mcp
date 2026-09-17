@@ -45,12 +45,27 @@ function abortError(signal: AbortSignal): EdunetError {
   return signal.reason instanceof EdunetError ? signal.reason : new EdunetError("ABORTED");
 }
 
-function raceAbort<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
-  if (signal.aborted) return Promise.reject(abortError(signal));
+function raceAbort<T>(work: Promise<T>, signal: AbortSignal, discard?: (value: T) => void): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const abort = (): void => { reject(abortError(signal)); };
+    const abort = (): void => {
+      signal.removeEventListener("abort", abort);
+      reject(abortError(signal));
+    };
     signal.addEventListener("abort", abort, { once: true });
-    work.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
+    // Always observe work, including a fetch that synchronously aborts before returning.
+    void work.then((value) => {
+      signal.removeEventListener("abort", abort);
+      if (signal.aborted) {
+        // A fetch that ignores abort can still return a live body after the caller exits.
+        try { discard?.(value); } catch { /* Cleanup must not produce an unhandled rejection. */ }
+        return;
+      }
+      resolve(value);
+    }, (error: unknown) => {
+      signal.removeEventListener("abort", abort);
+      reject(error);
+    });
+    if (signal.aborted) abort();
   });
 }
 
@@ -95,6 +110,8 @@ async function delay(ms: number, signal: AbortSignal): Promise<void> {
 function retryDelay(header: string | null, attempt: number): number {
   const fallback = 250 * 2 ** attempt;
   if (!header) return fallback;
+  // Oversized but valid delay-seconds must consume the budget, not overflow to a retry.
+  if (/^\d+$/.test(header.trim())) return Math.max(fallback, Number(header) * 1000);
   const seconds = Number(header);
   const requested = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(header) - Date.now();
   return Number.isFinite(requested) ? Math.max(fallback, requested) : fallback;
@@ -131,7 +148,7 @@ export async function requestBytes(url: string | URL, options: HttpOptions = {})
         const response = await raceAbort(fetchImpl(target, {
           method: "GET", redirect: "manual", signal: combined,
           ...(options.headers !== undefined ? { headers: options.headers } : {}),
-        }), combined);
+        }), combined, (response) => { void response.body?.cancel().catch(() => {}); });
         if (!response.ok) {
           void response.body?.cancel().catch(() => {});
           nextDelay = retryDelay(response.headers.get("retry-after"), attempt);

@@ -61,7 +61,11 @@ export function isPublicAddress(address: string): boolean {
 }
 
 function expandIpv6(address: string): number[] {
-  const sides = address.toLowerCase().split("::");
+  const hexadecimal = address.toLowerCase().replace(/\d+(?:\.\d+){3}$/, (tail) => {
+    const octets = tail.split(".").map(Number);
+    return `${((octets[0]! << 8) | octets[1]!).toString(16)}:${((octets[2]! << 8) | octets[3]!).toString(16)}`;
+  });
+  const sides = hexadecimal.split("::");
   const left = sides[0] ? sides[0].split(":").map((word) => parseInt(word, 16)) : [];
   const right = sides[1] ? sides[1].split(":").map((word) => parseInt(word, 16)) : [];
   return sides.length === 1 ? left : [...left, ...Array<number>(8 - left.length - right.length).fill(0), ...right];
@@ -210,7 +214,7 @@ async function retrieve(value: string | URL, purpose: Purpose, context: RequestC
         if ([301, 302, 303, 307, 308].includes(status)) {
           const location = response.headers.location;
           response.destroy();
-          if (!location || redirect >= MAX_REDIRECTS) throw new DownloadError("DOWNLOAD_BLOCKED");
+          if (!location || /[\\\x00-\x20]/.test(location) || redirect >= MAX_REDIRECTS) throw new DownloadError("DOWNLOAD_BLOCKED");
           // Revalidate host, path, DNS and actual connection for EVERY redirect.
           let next: URL;
           try { next = new URL(location, url); } catch { throw new DownloadError("DOWNLOAD_BLOCKED"); }
@@ -252,8 +256,8 @@ export async function safeDownload(url: string, options: DownloadOptions = {}): 
   return withinBudget(options, async (context) => {
     let target: URL;
     try { target = new URL(url); } catch { throw new DownloadError("DOWNLOAD_BLOCKED"); }
+    target = validateDownloadUrl(url, target.hostname === "api.edunet.net" ? "metadata" : "document");
     if (target.hostname === "api.edunet.net") {
-      validateDownloadUrl(target, "metadata");
       if (!/^\/main\/fileRsc\/downloadFile\/\d{1,20}$/.test(target.pathname)) throw new DownloadError("DOWNLOAD_BLOCKED");
       const result = await metadata(target, context);
       if (!result || typeof result !== "object" || !("success" in result) || result.success !== true

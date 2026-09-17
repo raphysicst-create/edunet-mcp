@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { searchEdunet } from "../client.js";
+import { EdunetError } from "../errors.js";
 import type { SearchInput, SearchOutput } from "../schema.js";
 import { resolveResource, resourceDetailUrl } from "../resource/resolver.js";
 import {
@@ -118,6 +119,8 @@ function uniqueWarnings(warnings: Warning[]): Warning[] {
 /** Independent metadata discovery; parser packages and attachment bytes never enter this path. */
 export function createAchievementSearch(deps: AchievementSearchDependencies): (input: SearchAchievementInput, signal?: AbortSignal) => Promise<AchievementSearchResponse> {
   return async (unvalidated, externalSignal) => {
+    const checkCancellation = (): void => { if (externalSignal?.aborted) throw new EdunetError("ABORTED"); };
+    checkCancellation();
     const input = searchAchievementInputSchema.parse(unvalidated);
     const queryVariants = buildAchievementQueryVariants(input);
     const now = deps.now?.() ?? Date.now();
@@ -171,12 +174,14 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
             resources.set(key, {resource, achievementQuery, ...(plan.registryPath ? {registry: plan.registryPath} : {})});
           }
         } catch (error) {
+          checkCancellation();
           const configurationMissing = error !== null && typeof error === "object" && "code" in error && error.code === "CONFIGURATION";
           if (!configurationMissing) recordAttempt(plan);
           failed = true;
           warnings.push({code: configurationMissing ? "search_configuration_unavailable" : searchSignal.aborted ? "discovery_search_timeout" : "official_search_unavailable", message: "일부 공식 검색 질의를 완료하지 못했습니다. 성공한 조회 범위만 반환합니다."});
         }
       }));
+      checkCancellation();
       clearTimeout(searchTimer);
       const priority = (candidate: {resource: ResourceIdentity; achievementQuery: boolean}): number => score(candidate.resource).score + (candidate.achievementQuery ? 2 : 0);
       const ranked = [...resources.values()].sort((a, b) => priority(b) - priority(a) || a.resource.id.localeCompare(b.resource.id));
@@ -197,11 +202,13 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
             else failed = true;
             warnings.push(...details.warnings);
           } catch {
+            checkCancellation();
             failed = true;
             warnings.push({code: "attachment_metadata_unavailable", message: "일부 후보의 첨부를 확인하지 못했습니다. 검색 결과의 출처는 유지합니다."});
           }
         }
       }));
+      checkCancellation();
       if (ranked.length > inspected.length) {
         failed = true;
         warnings.push({code: "candidate_metadata_limit", message: "요청 시간과 크기 제한으로 상위 20개 후보의 첨부 메타데이터만 조회했습니다."});

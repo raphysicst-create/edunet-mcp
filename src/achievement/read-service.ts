@@ -3,11 +3,26 @@ import type { AchievementConfig } from "./config.js";
 import { readAchievementInputSchema, readAchievementResponseSchema, resourceIdentitySchema, workerResultSchema, type ReadAchievementInput, type ReadAchievementResponse, type ResourceDetails, type ResourceIdentity, type ResolvedAttachment, type WorkerResult } from "./contracts.js";
 import { ReferenceCodec, ReferenceError } from "./references.js";
 import { WorkerUnavailableError, type WorkerGateway } from "./gateway.js";
+import { EdunetError } from "../errors.js";
 
 export interface ReadDependencies {references:ReferenceCodec;gateway:WorkerGateway;config:AchievementConfig;resolveResource:(resource:ResourceIdentity,signal?:AbortSignal)=>Promise<ResourceDetails>}
 const identity = (resource:ResourceIdentity):string=>`${resource.id}|${resource.sourceUrl ?? ""}`;
 const enabled = (format:string,config:AchievementConfig):boolean=>format==="pdf" ? config.pdfReadEnabled : format==="hwp" ? config.hwpReadEnabled : format==="hwpx" && config.hwpxReadEnabled;
 const filtersKey = (input:ReadAchievementInput):string=>createHash("sha256").update(JSON.stringify([input.grade,input.subject,input.achievementStandardCode,input.levelLabel])).digest("hex");
+async function cancellable<T>(work:()=>Promise<T>,signal?:AbortSignal):Promise<T> {
+  if(signal?.aborted) throw new EdunetError("ABORTED");
+  if(!signal) return work();
+  let abort:(()=>void)|undefined;
+  try {
+    const pending=work();
+    const value=await Promise.race([pending,new Promise<never>((_,reject)=>{
+      abort=()=>reject(new EdunetError("ABORTED"));
+      if(signal.aborted) abort();else signal.addEventListener("abort",abort,{once:true});
+    })]);
+    if(signal.aborted) throw new EdunetError("ABORTED");
+    return value;
+  } finally {if(abort) signal.removeEventListener("abort",abort);}
+}
 function matches(record:WorkerResult["records"][number], input:ReadAchievementInput):boolean {
   for(const name of ["grade","subject","achievementStandardCode"] as const) {
     if(input[name] && record[name]?.raw!==input[name] && record[name]?.normalized!==input[name]) return false;
@@ -16,14 +31,18 @@ function matches(record:WorkerResult["records"][number], input:ReadAchievementIn
 }
 export function createAchievementReader(deps:ReadDependencies) {
   return async (rawInput:ReadAchievementInput,signal?:AbortSignal,mode:"achievement"|"resource"="achievement"):Promise<ReadAchievementResponse>=>{
+    if(signal?.aborted) throw new EdunetError("ABORTED");
     const input=readAchievementInputSchema.parse(rawInput);
     const payload=deps.references.verify(input.achievementRef,"achievement");
     const resource=resourceIdentitySchema.parse(payload.resource);
     const resourceRef=deps.references.issue("resource",{resource});
     const base:ReadAchievementResponse={kind:"edunet_achievement_read",status:"metadata_only",source:{resourceRef,achievementRef:input.achievementRef,title:resource.title,...(resource.sourceUrl?{sourceUrl:resource.sourceUrl}:{}),sourceSystem:"edunet",retrievedAt:new Date().toISOString(),...(resource.snippet?{searchEvidence:[{quote:resource.snippet,location:{anchor:"metadata-snippet"}}]}:{})},records:[],warnings:[],visualContentInterpreted:false};
     let details:ResourceDetails;
-    try {details=await deps.resolveResource(resource,signal);}
-    catch {return {...base,status:"source_unavailable",warnings:[{code:"SOURCE_UNAVAILABLE",message:"자료 상세·첨부 목록을 확인할 수 없습니다. 원문 링크를 확인하세요."}]};}
+    try {details=await cancellable(()=>deps.resolveResource(resource,signal),signal);}
+    catch(error) {
+      if(signal?.aborted || error instanceof EdunetError && error.code==="ABORTED") throw new EdunetError("ABORTED");
+      return {...base,status:"source_unavailable",warnings:[{code:"SOURCE_UNAVAILABLE",message:"자료 상세·첨부 목록을 확인할 수 없습니다. 원문 링크를 확인하세요."}]};
+    }
     base.warnings.push(...details.warnings);
     if(details.warnings.some(w=>["attachment_metadata_unavailable","attachment_metadata_timeout","detail_path_unverified"].includes(w.code))) return {...base,status:"source_unavailable"};
     base.source.title=details.resource.title;
@@ -70,12 +89,13 @@ export function createAchievementReader(deps:ReadDependencies) {
     let result:WorkerResult;
     try {
       const handle=deps.references.issue("worker",{resource,attachmentId:attachment.id,attachmentRef,mode,formats:{pdf:deps.config.pdfReadEnabled,hwp:deps.config.hwpReadEnabled,hwpx:deps.config.hwpxReadEnabled}},60_000);
-      result=workerResultSchema.parse(await deps.gateway.run(handle,signal));
-      if(result.status==="verified_extraction" && (!result.records.length || !result.contentHash || !result.attachment)) throw new WorkerUnavailableError("WORKER_INVALID_RESPONSE");
+      result=workerResultSchema.parse(await cancellable(()=>deps.gateway.run(handle,signal),signal));
+      if(result.status==="verified_extraction" && (!result.records.length || !result.contentHash || result.attachment?.downloadStatus!=="downloaded")) throw new WorkerUnavailableError("WORKER_INVALID_RESPONSE");
       if(result.attachment && (result.attachment.attachmentRef!==attachmentRef || result.attachment.fileName!==attachment.fileName || result.attachment.format!==attachment.format)) throw new WorkerUnavailableError("WORKER_INVALID_RESPONSE");
       const spans=result.records.flatMap(record=>[...record.evidence,...Object.values(record).flatMap(value=>value && typeof value==="object" && "evidence" in value && Array.isArray(value.evidence)?value.evidence:[])]);
       if(spans.some(span=>span.sourceHash && span.sourceHash!==result.contentHash)) throw new WorkerUnavailableError("WORKER_INVALID_RESPONSE");
     } catch(error) {
+      if(signal?.aborted || (error instanceof EdunetError || error instanceof WorkerUnavailableError) && error.code==="ABORTED") throw new EdunetError("ABORTED");
       return {...base,status:error instanceof WorkerUnavailableError && error.code==="WORKER_TIMEOUT"?"parse_failed":"worker_unavailable",warnings:[...base.warnings,{code:error instanceof WorkerUnavailableError?error.code:"WORKER_UNAVAILABLE",message:"문서 Worker에서 읽기를 완료하지 못했습니다. 검색 기능과 원문 링크는 계속 사용할 수 있습니다."}]};
     }
     const {contentHash,...read}=result;
@@ -107,13 +127,22 @@ export function createAchievementReader(deps:ReadDependencies) {
       const remaining=input.maxChars-chars;
       let take=block.text.length-rawCharOffset;
       const fragment=(count:number)=>({...block,text:block.text.slice(rawCharOffset,rawCharOffset+count),location:{...block.location,charStart:(block.location.charStart ?? 0)+rawCharOffset,charEnd:(block.location.charStart ?? 0)+rawCharOffset+count}});
+      const minimum=take?String.fromCodePoint(block.text.codePointAt(rawCharOffset)!).length:0;
+      if(JSON.stringify(fragment(minimum)).length>20000) {
+        if(!output.warnings.some(warning=>warning.code==="RAW_BLOCK_EXCEEDS_HARD_LIMIT")) output.warnings.push({code:"RAW_BLOCK_EXCEEDS_HARD_LIMIT",message:"원문 블록의 위치 정보가 최대 20,000자 한도를 초과하여 해당 블록을 제외했습니다. 원문 링크를 확인하세요."});
+        rawOffset++;rawCharOffset=0;continue;
+      }
       let piece=fragment(take);
       if(JSON.stringify(piece).length>remaining) {
         let lo=0,hi=take;
         while(lo<hi) {const mid=Math.ceil((lo+hi)/2);if(JSON.stringify(fragment(mid)).length<=remaining) lo=mid;else hi=mid-1;}
         take=lo;
         if(take && /[\uD800-\uDBFF]/u.test(block.text[rawCharOffset+take-1]!)) take--;
-        if(take===0) break;piece=fragment(take);
+        if(take===0) {
+          if(!chars) output.warnings.push({code:"RAW_BLOCK_EXCEEDS_RESPONSE_LIMIT",message:"다음 원문 블록의 위치 정보가 maxChars를 초과합니다. maxChars를 높여 이어 읽으세요."});
+          break;
+        }
+        piece=fragment(take);
       }
       output.rawBlocks!.push(piece);chars+=JSON.stringify(piece).length;
       rawCharOffset+=take;
