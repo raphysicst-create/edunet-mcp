@@ -16,7 +16,7 @@ export function preflightHwpx(bytes: Uint8Array): void {
   let count = 0;
   let hasSection = false;
   let hasMime = false;
-  const names = new Set<string>();
+  const names = new Map<string, number>();
   while (offset + 4 <= data.length && data.readUInt32LE(offset) === 0x04034b50) {
     if (offset + 30 > data.length || ++count > MAX_ENTRIES) fail("ARCHIVE_LIMIT", "HWPX archive entry limit exceeded");
     const flags = data.readUInt16LE(offset + 6);
@@ -33,7 +33,7 @@ export function preflightHwpx(bytes: Uint8Array): void {
     if (end > data.length) fail("CORRUPTED_ARCHIVE", "HWPX archive entry extends beyond the file");
     const name = data.toString("utf8", offset + 30, offset + 30 + nameLength);
     if (names.has(name) || name.includes("..") || name.startsWith("/")) fail("CORRUPTED_ARCHIVE", "HWPX archive has ambiguous entry paths");
-    names.add(name);
+    names.set(name, offset);
     let expanded: Buffer;
     try {
       if (method === 0) expanded = data.subarray(start, end);
@@ -54,19 +54,31 @@ export function preflightHwpx(bytes: Uint8Array): void {
   if (!hasMime || !hasSection) fail("INVALID_HWPX", "Archive does not contain a supported HWPX document");
   if (offset + 4 > data.length || data.readUInt32LE(offset) !== 0x02014b50) fail("CORRUPTED_ARCHIVE", "HWPX central directory is missing");
   // Central entries must point to the same local entries. JSZip uses this directory.
+  const centralStart = offset;
   let centralCount = 0;
   while (offset + 46 <= data.length && data.readUInt32LE(offset) === 0x02014b50) {
     const nameLength = data.readUInt16LE(offset + 28);
     const extraLength = data.readUInt16LE(offset + 30);
     const commentLength = data.readUInt16LE(offset + 32);
+    if (offset + 46 + nameLength + extraLength + commentLength > data.length) fail("CORRUPTED_ARCHIVE", "HWPX directory entry extends beyond the file");
     const name = data.toString("utf8", offset + 46, offset + 46 + nameLength);
-    if (!names.delete(name)) fail("CORRUPTED_ARCHIVE", "HWPX directory differs from local entries");
     const local = data.readUInt32LE(offset + 42);
+    // Bind each name to its own validated payload, not merely any local header.
+    if (names.get(name) !== local) fail("CORRUPTED_ARCHIVE", "HWPX directory differs from local entries");
+    names.delete(name);
     if (local + 30 > data.length || data.readUInt32LE(local) !== 0x04034b50 || data.readUInt32LE(local + 18) !== data.readUInt32LE(offset + 20) || data.readUInt32LE(local + 22) !== data.readUInt32LE(offset + 24) || data.readUInt16LE(local + 8) !== data.readUInt16LE(offset + 10)) fail("CORRUPTED_ARCHIVE", "HWPX central and local metadata disagree");
     offset += 46 + nameLength + extraLength + commentLength;
     centralCount++;
   }
   if (names.size || centralCount !== count) fail("CORRUPTED_ARCHIVE", "HWPX directory entry count differs");
+  // JSZip starts from the final EOCD. It must select exactly the directory above,
+  // never an appended alternate directory or offsets relative to hidden data.
+  if (offset + 22 > data.length || data.readUInt32LE(offset) !== 0x06054b50
+    || data.lastIndexOf(Buffer.from("504b0506", "hex")) !== offset
+    || data.readUInt16LE(offset + 4) !== 0 || data.readUInt16LE(offset + 6) !== 0
+    || data.readUInt16LE(offset + 8) !== centralCount || data.readUInt16LE(offset + 10) !== centralCount
+    || data.readUInt32LE(offset + 12) !== offset - centralStart || data.readUInt32LE(offset + 16) !== centralStart
+    || offset + 22 + data.readUInt16LE(offset + 20) !== data.length) fail("CORRUPTED_ARCHIVE", "HWPX end record does not identify the validated directory");
 }
 
 type CfbEntry = { name: string; type: number; content?: Uint8Array };
