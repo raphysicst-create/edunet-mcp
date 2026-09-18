@@ -17,6 +17,15 @@ test('signed references survive restart, reject tampering, wrong purpose, expiry
   assert.throws(()=>a.issue('resource',{resource:'한'.repeat(10000)}));
 });
 
+test('references issued across clock ticks retain their exact lifetime and verify immediately',()=>{
+  let now=100000;
+  const codec=new ReferenceCodec('test-reference-secret-32-bytes-minimum',()=>now++,1000);
+  const token=codec.issue('achievement',{resource:{id:'1'}});
+  const payload=JSON.parse(Buffer.from(token.split('.')[0],'base64url').toString('utf8'));
+  assert.equal(payload.exp-payload.iat,1000);
+  assert.deepEqual(codec.verify(token,'achievement'),{resource:{id:'1'}});
+});
+
 test('achievement inputs reject arbitrary URLs, files, unknown fields and unbounded responses',()=>{
   for(const value of [{},{levelLabel:'상'},{query:'https://evil.test/a'},{query:'C:\\private.hwp'},{query:'q',url:'https://evil.test'},{subject:'과학',page:51}]) assert.equal(searchAchievementInputSchema.safeParse(value).success,false);
   assert.equal(searchAchievementInputSchema.parse({subject:'과학'}).pageSize,10);

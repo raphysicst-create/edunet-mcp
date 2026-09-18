@@ -11,7 +11,8 @@ export class ReferenceCodec {
     if (Buffer.byteLength(secret) < 32) throw new Error("EDUNET_REFERENCE_SECRET must contain at least 32 bytes");
   }
   issue(kind:ReferenceKind, data:Record<string,unknown>, ttlMs=this.ttlMs):string {
-    const body = Buffer.from(JSON.stringify({v:1,kind,aud:"edunet-achievement",iat:this.now(),exp:this.now()+Math.min(ttlMs, this.ttlMs),nonce:randomBytes(12).toString("base64url"),data})).toString("base64url");
+    const now=this.now();
+    const body = Buffer.from(JSON.stringify({v:1,kind,aud:"edunet-achievement",iat:now,exp:now+Math.min(ttlMs, this.ttlMs),nonce:randomBytes(12).toString("base64url"),data})).toString("base64url");
     const token=`${body}.${this.sign(body)}`;
     if(token.length>16000) throw new ReferenceError();
     return token;
@@ -24,7 +25,8 @@ export class ReferenceCodec {
       const supplied = Buffer.from(signature,"base64url"), expected=Buffer.from(this.sign(body),"base64url");
       if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) throw new ReferenceError();
       const value = JSON.parse(Buffer.from(body,"base64url").toString("utf8"));
-      if (value.v !== 1 || value.kind !== kind || value.aud !== "edunet-achievement" || !Number.isFinite(value.iat) || !Number.isFinite(value.exp) || value.iat > this.now()+1000 || value.exp <= this.now() || value.exp-value.iat > this.ttlMs || value.exp <= value.iat || !value.data || typeof value.data !== "object" || Array.isArray(value.data)) throw new ReferenceError();
+      const now=this.now();
+      if (value.v !== 1 || value.kind !== kind || value.aud !== "edunet-achievement" || !Number.isFinite(value.iat) || !Number.isFinite(value.exp) || value.iat > now+1000 || value.exp <= now || value.exp-value.iat > this.ttlMs || value.exp <= value.iat || !value.data || typeof value.data !== "object" || Array.isArray(value.data)) throw new ReferenceError();
       return value.data as Record<string,unknown>;
     } catch { throw new ReferenceError(); }
   }
