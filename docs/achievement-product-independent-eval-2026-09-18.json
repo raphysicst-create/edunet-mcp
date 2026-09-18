@@ -1,0 +1,815 @@
+{
+  "schemaVersion": 1,
+  "kind": "achievement_product_independent_evaluation",
+  "executionSession": {
+    "kind": "separate_delegated_task",
+    "sourceThread": "01a0b1c6-e599-7902-8ea1-dedd3027456f"
+  },
+  "executionStartCommit": "fdabbe697aa943e378a139e34d70a2ed3c1effcd",
+  "evaluatedSourceCommit": "f694b31057a749c9c2c3c97462a1b97c14139f36",
+  "branch": "codex/achievement-product-eval-run",
+  "sourceSnapshotNote": "Tests ran after local scorer edits. Those exact edits were committed after testing; discovery and grade scorer hashes match the committed working file.",
+  "sourceHashes": {
+    "evals/achievement-product/score.mjs": "sha256:6b7a11b26f0688e675a323f97162795d4983f7b2745c0e41d7f7ec1218604c57",
+    "evals/tests/achievement-product-score.test.mjs": "sha256:5badcd84f4da2cb97f9e8528aa8ff50ab34e22b67a5eb7ee2209b737b3f16408",
+    "evals/achievement-product/collect.mjs": "sha256:176edcfc3b9d331f6d785c716c2a378508069b8817c8abcdf4e112de3c9267c4",
+    "evals/achievement-product/index.mjs": "sha256:09f233199f3988414f7aefe1317b8ca67cea0b03a0af8764fe79d234546230d7",
+    "package-lock.json": "sha256:12413b2b5476b0648b30d511798ea3080641226a038e0db9ee8a2ba980c6f7b2"
+  },
+  "scorerVersion": "1.1.0",
+  "corpusHash": "sha256:0a9912083ffe55fcfb3d16cd5a20fee8d040d3a7a8f86298b55f6e03ef2bfb46",
+  "environment": {
+    "node": "v24.18.0",
+    "platform": "win32",
+    "isolation": "Separate git worktree; ancestor node_modules reused; no dependency install; no paid model calls.",
+    "rootDeploymentChangesIncluded": false
+  },
+  "fixes": [
+    "Require run.completed === true; absent or non-boolean declarations cannot complete or pass.",
+    "Separate extra parser coordinates not reviewed in gold from factual mismatches; no full evidence credit until reviewed.",
+    "Render ignored baseline artifacts as local paths instead of broken repository hyperlinks."
+  ],
+  "validation": {
+    "typecheck": "pass",
+    "build": "pass",
+    "productTests": {
+      "passed": 60,
+      "total": 60
+    },
+    "contract": {
+      "passed": 289,
+      "total": 289,
+      "pass": true
+    },
+    "golden": {
+      "passed": 8,
+      "total": 8,
+      "humanReviewed": false,
+      "scope": "Offline synthetic achievement semantics and public non-curriculum layout smoke fixtures. Not a release certification."
+    },
+    "publicDocuments": {
+      "passed": 2,
+      "total": 2,
+      "educationalQualityValidated": false,
+      "results": [
+        {
+          "format": "pdf",
+          "status": "metadata_only",
+          "parser": "kordoc",
+          "version": "4.14.0",
+          "bytes": 113952,
+          "records": 0,
+          "rawBlocks": 100,
+          "documentExtractionComplete": true,
+          "hasMore": true,
+          "elapsedMs": 1719,
+          "warnings": [
+            "VISUAL_CONTENT_NOT_INTERPRETED",
+            "TABLE_PROFILE_UNMATCHED",
+            "NO_ACHIEVEMENT_RECORDS",
+            "NO_VERIFIED_RECORDS"
+          ]
+        },
+        {
+          "format": "hwp",
+          "status": "metadata_only",
+          "parser": "kordoc",
+          "version": "4.14.0",
+          "bytes": 343040,
+          "records": 0,
+          "rawBlocks": 83,
+          "documentExtractionComplete": true,
+          "hasMore": false,
+          "elapsedMs": 1380,
+          "warnings": [
+            "VISUAL_CONTENT_NOT_INTERPRETED",
+            "LOCATION_PRECISION",
+            "TABLE_PROFILE_UNMATCHED",
+            "NO_ACHIEVEMENT_RECORDS",
+            "NO_VERIFIED_RECORDS"
+          ]
+        }
+      ]
+    }
+  },
+  "discovery": {
+    "completed": true,
+    "queryCount": 30,
+    "queriesWithCandidates": 0,
+    "candidateCount": 0,
+    "statusCounts": {
+      "not_found_in_official_index": 30
+    },
+    "queries": [
+      {
+        "id": "middle-science-01",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1284,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-science-02",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1368,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-science-03",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1055,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-science-04",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1386,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-science-05",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1384,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-math-01",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1381,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-math-02",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1360,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-math-03",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1370,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-math-04",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1393,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-math-05",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1402,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-korean-01",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1356,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-korean-02",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1311,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-korean-03",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1371,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-korean-04",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1407,
+        "officialApiQueried": true
+      },
+      {
+        "id": "middle-korean-05",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1401,
+        "officialApiQueried": true
+      },
+      {
+        "id": "high-science-01",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1398,
+        "officialApiQueried": true
+      },
+      {
+        "id": "high-science-02",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1422,
+        "officialApiQueried": true
+      },
+      {
+        "id": "high-science-03",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1402,
+        "officialApiQueried": true
+      },
+      {
+        "id": "high-science-04",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1376,
+        "officialApiQueried": true
+      },
+      {
+        "id": "high-science-05",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1383,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-01",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1393,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-02",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1401,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-03",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1359,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-04",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1355,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-05",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1345,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-06",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1158,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-07",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1330,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-08",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1321,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-09",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1309,
+        "officialApiQueried": true
+      },
+      {
+        "id": "other-10",
+        "status": "not_found_in_official_index",
+        "candidates": 0,
+        "durationMs": 1382,
+        "officialApiQueried": true
+      }
+    ]
+  },
+  "quality": {
+    "status": "inconclusive",
+    "pass": false,
+    "complete": false,
+    "approvedDocuments": 0,
+    "approvedQueries": 0,
+    "metrics": {
+      "discoveryRecallAtK": {
+        "correct": 0,
+        "total": 0,
+        "value": null,
+        "k": 10,
+        "reference": "Human-judged resource set; not all documents on EDUNET."
+      },
+      "negativeQueryAccuracy": {
+        "correct": 0,
+        "total": 0,
+        "value": null
+      },
+      "records": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "levelRecords": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "fields": {
+        "grade": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "subject": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "domain": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "achievementStandardCode": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "achievementStandardText": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "achievementLevel": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        },
+        "description": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "precision": null,
+          "recall": null,
+          "f1": null
+        }
+      },
+      "levelRawLabelFidelity": {
+        "correct": 0,
+        "total": 0,
+        "value": null
+      },
+      "evidenceCorrectness": {
+        "correct": 0,
+        "total": 0,
+        "value": null,
+        "unverifiedLocationFields": 0
+      },
+      "attachmentSelection": {
+        "correct": 0,
+        "total": 0,
+        "value": null,
+        "accuracy": null,
+        "selectionCoverage": {
+          "correct": 0,
+          "total": 0,
+          "value": null
+        }
+      },
+      "abstentionCoverage": {
+        "correct": 0,
+        "total": 0,
+        "value": null
+      },
+      "documentCompleteness": {
+        "correct": 0,
+        "total": 0,
+        "value": null
+      },
+      "macroDocumentRecordRecall": {
+        "value": null,
+        "documents": 0
+      }
+    },
+    "failures": [
+      "insufficient_reviewed_positive_documents",
+      "corpus_review_pending",
+      "no_approved_positive_discovery_queries",
+      "target_not_met:discoveryRecallAtK",
+      "target_not_met:recordPrecision",
+      "target_not_met:recordRecall",
+      "target_not_met:levelRecordPrecision",
+      "target_not_met:levelRecordRecall",
+      "target_not_met:levelRawLabelFidelity",
+      "target_not_met:evidenceCorrectness",
+      "target_not_met:attachmentSelectionAccuracy"
+    ]
+  },
+  "clientEvaluation": {
+    "scenarios": 12,
+    "status": "not_run",
+    "modelRuns": 0
+  },
+  "publication": {
+    "remoteWritePerformed": false,
+    "scope": "Local evaluation and commits only; remote publication is handled by the parent after approval."
+  },
+  "unmeasured": [
+    "Discovery recall and field/record quality on independently human-approved real-document gold.",
+    "Attachment selection accuracy against reviewed real-document gold.",
+    "ChatGPT/Claude client behavior; 12 manual scenarios were not executed.",
+    "Operational beta and remote deployment."
+  ],
+  "commands": [
+    {
+      "step": "typecheck",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "C:/Users/USER/Desktop/develop/edunet-mcp/node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json",
+        "--noEmit"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:27:49.994Z",
+      "finishedAt": "2026-09-18T00:27:50.197Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/typecheck.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/typecheck.stderr.log",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "step": "build",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "C:/Users/USER/Desktop/develop/edunet-mcp/node_modules/typescript/bin/tsc",
+        "-p",
+        "tsconfig.json"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:27:50.426Z",
+      "finishedAt": "2026-09-18T00:27:50.643Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/build.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/build.stderr.log",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "step": "golden",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "evals/achievement.mjs"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:27:50.696Z",
+      "finishedAt": "2026-09-18T00:27:51.191Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/golden.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/golden.stderr.log",
+      "stdoutHash": "sha256:b3b629620d69332616698a2f0d90fd83a5a845992a63272ecd86d44aeeed9160",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "step": "public",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "scripts/verify-achievement-public.mjs"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:28:13.684Z",
+      "finishedAt": "2026-09-18T00:28:17.565Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/public.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/public.stderr.log",
+      "stdoutHash": "sha256:11c3721a17a10e34eb556e035969033a8bc03dd55c2b1259b39e77fd666108ed",
+      "stderrHash": "sha256:be31e5a465a982ebdefecce7cec79d8e0a103be8787c1a071c824c1c51d54a3e"
+    },
+    {
+      "step": "product",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "--test",
+        "evals/tests/achievement-product-cli.test.mjs",
+        "evals/tests/achievement-product-collect.test.mjs",
+        "evals/tests/achievement-product-score.test.mjs"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:28:52.943Z",
+      "finishedAt": "2026-09-18T00:28:54.045Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/product.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/product.stderr.log",
+      "stdoutHash": "sha256:669c82777896701f6c7dffa914e544dcf9ce0b9ef7a5a89baa2d65ff1d308fae",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "step": "contract",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "evals/contract.mjs",
+        "--out",
+        "evals/results/independent-2026-09-18/contract.json"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:28:54.098Z",
+      "finishedAt": "2026-09-18T00:28:59.325Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/contract.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/contract.stderr.log",
+      "stdoutHash": "sha256:51f1207d6aebc7cfa78898bf2aff2294fa6d724d752949dfd6b85e31ca232d00",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "step": "discover",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "--env-file-if-exists=C:/Users/USER/Desktop/develop/edunet-mcp/.env",
+        "evals/achievement-product/index.mjs",
+        "--mode",
+        "discover",
+        "--out",
+        "evals/results/independent-2026-09-18/discovery.json"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:29:15.815Z",
+      "finishedAt": "2026-09-18T00:29:56.756Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/discover.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/discover.stderr.log",
+      "stdoutHash": "sha256:7e69f1354646f5d0af52235d12eb3a835a864eea7ca2cb914f53cecaffedbe56",
+      "stderrHash": "sha256:3f1315c5d8bb78bdfe47ff9296009427994111ef32a3052b8c2a74a966c16379"
+    },
+    {
+      "step": "audit",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "evals/achievement-product/index.mjs",
+        "--mode",
+        "audit",
+        "--out",
+        "evals/results/independent-2026-09-18/audit.json"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:30:33.297Z",
+      "finishedAt": "2026-09-18T00:30:33.514Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/audit.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/audit.stderr.log",
+      "stdoutHash": "sha256:fc992ea29450c916d6b336fdc6d839579758328c0ad210ce66cb9ab0da5ed763",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "step": "review",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "evals/achievement-product/index.mjs",
+        "--mode",
+        "review-packet",
+        "--run",
+        "evals/results/independent-2026-09-18/discovery.json",
+        "--out",
+        "evals/results/independent-2026-09-18/review.json"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:30:33.569Z",
+      "finishedAt": "2026-09-18T00:30:33.792Z",
+      "exitCode": 0,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/review.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/review.stderr.log",
+      "stdoutHash": "sha256:ca1f678fea9b74f21a1bcdcf01d59eee7690e422bbf4641f0838a6fa8a2c1434",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "step": "grade",
+      "executable": "C:\\Users\\USER\\AppData\\Local\\Programs\\node-v24.18.0-win-x64\\node.exe",
+      "arguments": [
+        "evals/achievement-product/index.mjs",
+        "--mode",
+        "grade",
+        "--run",
+        "evals/results/independent-2026-09-18/discovery.json",
+        "--out",
+        "evals/results/independent-2026-09-18/grade.json"
+      ],
+      "cwd": "C:/Users/USER/Desktop/develop/edunet-mcp/.scratch/achievement-product-eval-session",
+      "startedAt": "2026-09-18T00:30:33.843Z",
+      "finishedAt": "2026-09-18T00:30:34.055Z",
+      "exitCode": 2,
+      "signal": null,
+      "spawnError": null,
+      "stdoutPath": "evals/results/independent-2026-09-18/grade.stdout.log",
+      "stderrPath": "evals/results/independent-2026-09-18/grade.stderr.log",
+      "stdoutHash": "sha256:4824e0cd9ea091e7b19b7c0ed9b131e658d3c5766600a4a9e81c57c692a95346",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evals/results/independent-2026-09-18/commands.jsonl",
+      "sha256": "sha256:05d95b9dd1e2eb69ca6c957037221bd1d2db7fcd4932d7e509862480922ff20a",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/contract.json",
+      "sha256": "sha256:3248b2a5dd8da41df879a225391b12619ebaf3d7f6fdf73a3a7e8c966d352f22",
+      "committed": false
+    },
+    {
+      "path": "evals/results/achievement-latest.json",
+      "sha256": "sha256:7817fcbf202bd64bbe4d8f4ae8454953825cee3d076b4db69c175e2ea2fad258",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/discovery.json",
+      "sha256": "sha256:c838a01e48380ef2cfde5e09b00a2a048f62733a168003020d470a3627296018",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/audit.json",
+      "sha256": "sha256:fc992ea29450c916d6b336fdc6d839579758328c0ad210ce66cb9ab0da5ed763",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/review.json",
+      "sha256": "sha256:698a32c4df3bf7cebf82ce5d296ff6eb5c34aca0ca7f1d25ec04320479484be4",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/grade.json",
+      "sha256": "sha256:da21492dada89c693c809fb20853ef12c927a5540cea9b468e182db3582cce06",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/typecheck.stdout.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/typecheck.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/build.stdout.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/build.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/golden.stdout.log",
+      "sha256": "sha256:b3b629620d69332616698a2f0d90fd83a5a845992a63272ecd86d44aeeed9160",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/golden.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/public.stdout.log",
+      "sha256": "sha256:11c3721a17a10e34eb556e035969033a8bc03dd55c2b1259b39e77fd666108ed",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/public.stderr.log",
+      "sha256": "sha256:be31e5a465a982ebdefecce7cec79d8e0a103be8787c1a071c824c1c51d54a3e",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/product.stdout.log",
+      "sha256": "sha256:669c82777896701f6c7dffa914e544dcf9ce0b9ef7a5a89baa2d65ff1d308fae",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/product.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/contract.stdout.log",
+      "sha256": "sha256:51f1207d6aebc7cfa78898bf2aff2294fa6d724d752949dfd6b85e31ca232d00",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/contract.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/discover.stdout.log",
+      "sha256": "sha256:7e69f1354646f5d0af52235d12eb3a835a864eea7ca2cb914f53cecaffedbe56",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/discover.stderr.log",
+      "sha256": "sha256:3f1315c5d8bb78bdfe47ff9296009427994111ef32a3052b8c2a74a966c16379",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/audit.stdout.log",
+      "sha256": "sha256:fc992ea29450c916d6b336fdc6d839579758328c0ad210ce66cb9ab0da5ed763",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/audit.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/review.stdout.log",
+      "sha256": "sha256:ca1f678fea9b74f21a1bcdcf01d59eee7690e422bbf4641f0838a6fa8a2c1434",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/review.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/grade.stdout.log",
+      "sha256": "sha256:4824e0cd9ea091e7b19b7c0ed9b131e658d3c5766600a4a9e81c57c692a95346",
+      "committed": false
+    },
+    {
+      "path": "evals/results/independent-2026-09-18/grade.stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "committed": false
+    }
+  ]
+}
