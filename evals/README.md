@@ -1,5 +1,9 @@
 # EDUNET evals
 
+## 성취수준 제품 평가
+
+실문서 discovery recall, 레코드/필드 precision·recall, 원문 라벨·근거 정확도, 첨부 선택을 측정하는 별도 실행기는 [achievement-product 안내](achievement-product/README.md)를 참고한다. `npm run eval:achievement:product -- --mode audit`로 코퍼스 준비 상태를 확인한다. 교사 질의 30개와 클라이언트 평가 시나리오를 제공하며, 사람 검수 전에는 품질 합격을 내지 않는다. 기존 `eval:achievement`의 합성·레이아웃 smoke 결과와 합산하지 않는다.
+
 ## 현재 판정 범위 — 2026-09-17
 
 이 문서는 **평가 실행기와 클라이언트 모델 행동 관측** 안내다. MCP 자체 검증은 [MCP 검증 기록](../docs/mcp-validation.md), Terra·Sonnet 관측은 [호환성 관측 요약](../docs/client-compatibility.md)으로 분리한다. 모델 점수는 MCP 합격점이나 RC 통과 조건으로 사용하지 않는다.
