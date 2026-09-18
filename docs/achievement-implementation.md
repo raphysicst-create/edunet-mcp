@@ -27,7 +27,7 @@ EDUNET_RESOURCE_READ_ENABLED=false
 
 `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`로 키를 생성할 수 있다. 동일한 키를 유지하면 재시작·다중 프로세스 사이에서도 참조 검증이 가능하다. 키를 변경하면 기존 참조와 cursor가 무효화된다. 실제 값을 Git, 로그, MCP 출력에 넣지 않는다.
 
-클라이언트의 도구 허용 목록에 새 도구를 추가한 후 MCP를 재시작한다. 저장소 `.codex/config.toml`은 예시 경로이므로 설치 경로에 맞춰야 한다. 새 읽기 Worker는 사용자가 별도로 연결하는 MCP가 아니다. `dist`, `config`, 런타임 의존성을 함께 설치한다. 현재 전송은 로컬 stdio이며 원격 배포를 새로 만들거나 기존 배포를 변경하지 않았다.
+클라이언트의 도구 허용 목록에 새 도구를 추가한 후 MCP를 재시작한다. 저장소 `.codex/config.toml`의 실행 경로는 설치 경로에 맞춰야 한다. 새 읽기 Worker는 사용자가 별도로 연결하는 MCP가 아니다. `dist`, `config`, 런타임 의존성을 함께 설치한다. 로컬 stdio와 원격 Streamable HTTP를 지원하며, 원격 배포와 운영 검증은 [Vercel 배포 기록](vercel-deployment.md)을 참고한다.
 
 ## 도구 계약과 사용 흐름
 

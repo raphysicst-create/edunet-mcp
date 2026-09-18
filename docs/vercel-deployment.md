@@ -45,4 +45,18 @@ npm run verify:remote -- https://edunet-mcp.vercel.app/api/mcp --read
 
 패키지와 원격 서버 버전 일치, 도구 3개, 실제 `광합성` 검색, 과학 성취수준 후보 탐색, 첨부 목록, 선택한 PDF/HWP 한 개의 텍스트 읽기를 확인합니다. `metadata_only`는 파일 텍스트를 읽었으나 성취수준 레코드를 확정하지 못했다는 의미입니다. 후보 검색의 `partial` 경고와 원문 읽기의 경고는 그대로 기록하며 도메인 정확도 검증을 대신하지 않습니다.
 
-이 문서는 배포 절차이며 특정 배포의 성공 기록은 아닙니다. 실제 운영 버전은 MCP 초기화 응답과 위 검증으로 확인합니다.
+## 운영 배포 검증 기록 — 2026-09-18 KST
+
+- 기존 `raphysicst/edunet-mcp` 프로젝트에 CLI로 운영 배포했습니다. Git 저장소는 Vercel 프로젝트에 연결돼 있지 않으므로 GitHub push만으로 자동 재배포되지 않습니다.
+- 코드 커밋: `74a4d19e55de611b5435a27697d2749099409a75`. 구현 `54656d5`, 참조 시간 오류 수정 `fafe151`을 포함합니다.
+- 배포 ID: `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`, 상태 `READY`, production alias `https://edunet-mcp.vercel.app`.
+- [배포 상세](https://vercel.com/raphysicst/edunet-mcp/B75SY33uabZUFmRSUN7QhkddXCDK), [MCP 주소](https://edunet-mcp.vercel.app/api/mcp).
+- Vercel Linux 빌드: 28초, 함수 818개 파일 / 67.14 MiB. 런타임 Node.js 24.
+- 로컬 타입 검사 및 전체 테스트 **176/176** 통과. 독립 임시 디렉터리의 배포 파일만으로 API import, PDF/HWP/HWPX 파싱, PDFium WASM, Worker IPC 검증을 포함합니다.
+- 원격 초기화 버전 `1.1.0-beta.1`, 도구 `search_edunet`, `search_edunet_achievement`, `read_edunet_achievement` 확인.
+- 원격 `광합성` 검색: 전체 111건 중 2건 반환.
+- 과학 성취수준 탐색: 후보 3건, 첫 후보 첨부 4개. 미검증 상세 경로에 대한 `detail_path_unverified` 경고로 상태는 `partial`입니다.
+- 실제 PDF와 HWP 각각 다운로드·Worker·원문 블록 10개 반환 성공. 두 자료 모두 `metadata_only`, 구조화 레코드 0개로 반환했습니다. 성취수준 필드 정확도나 전체 문서 추출 완료를 주장하지 않습니다.
+- 해당 배포의 최근 15분 `error` 로그 조회 결과 0건. 별도 로그 Drains나 지속 모니터링 설정은 이번 작업에서 변경하지 않았습니다.
+
+API 키와 등록 도메인은 기존 Vercel 값을 유지했습니다. 새 서명 비밀값은 Vercel Secret으로 생성·저장했고 소스나 Git에 넣지 않았습니다. 검색·PDF·HWP만 활성화했으며 HWPX·자동 첨부 선택·일반 문서 읽기는 기본 비활성 상태를 유지합니다.
