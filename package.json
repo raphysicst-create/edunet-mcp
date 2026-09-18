@@ -12,6 +12,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "build:vercel": "npm run build && node scripts/build-vercel.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "test": "npm run build && node --test tests/*.test.mjs",
@@ -20,6 +21,7 @@
     "eval:ai": "npm run build && node evals/ai.mjs",
     "eval:live": "npm run build && node --env-file-if-exists=.env evals/live.mjs",
     "verify:live": "npm run build && node --env-file=.env scripts/verify-live.mjs",
+    "verify:remote": "node scripts/verify-remote.mjs",
     "eval:achievement": "npm run build && node evals/achievement.mjs",
     "verify:achievement:public": "npm run build && node scripts/verify-achievement-public.mjs"
   },
@@ -33,6 +35,7 @@
   "devDependencies": {
     "@modelcontextprotocol/client": "2.0.0",
     "@types/node": "22.20.3",
+    "@vercel/nft": "1.11.0",
     "jszip": "3.10.2",
     "typescript": "7.0.2"
   }

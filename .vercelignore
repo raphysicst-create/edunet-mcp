@@ -1,0 +1,10 @@
+.git
+.codex
+.env
+.env.*
+.scratch
+node_modules
+dist
+evals/results
+releases
+*.log

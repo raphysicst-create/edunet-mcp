@@ -1,6 +1,6 @@
 # edunet-mcp
 
-**에듀넷 교육자료 검색과 성취수준 원문 읽기를 제공하는 로컬 MCP 서버입니다.** 기존 `search_edunet`은 제목, 최대 500자 발췌, 출처 링크와 페이지 정보만 제공하며 원문·첨부를 읽지 않습니다. 성취수준 베타를 켜면 후보 탐색, 첨부 선택, PDF/HWP 구조화, 필드별 원문 근거를 별도 도구로 제공합니다.
+**에듀넷 교육자료 검색과 성취수준 원문 읽기를 제공하는 MCP 서버입니다.** 로컬 stdio와 Vercel 원격 Streamable HTTP를 지원합니다. 기존 `search_edunet`은 제목, 최대 500자 발췌, 출처 링크와 페이지 정보만 제공하며 원문·첨부를 읽지 않습니다. 성취수준 베타를 켜면 후보 탐색, 첨부 선택, PDF/HWP 구조화, 필드별 원문 근거를 별도 도구로 제공합니다.
 
 현재 버전은 **`v1.1.0-beta.1`**입니다. 새 기능은 기본 비활성화이며, 기존 검색 계약을 유지합니다. [성취수준 설정·지원 범위·검증](docs/achievement-implementation.md), [기존 RC 기록](docs/release-v1.0.0-rc.1.md)을 참고하세요.
 
@@ -89,7 +89,7 @@ Claude Code에서 `/mcp`로 연결 상태를 확인합니다.
 
 ### ChatGPT 웹
 
-**이 RC의 로컬 stdio 서버를 ChatGPT 웹에 직접 등록할 수는 없습니다.** ChatGPT 개발자 모드의 원격 MCP 연결은 SSE 또는 Streamable HTTP를 사용합니다. 별도 원격 전송·인증 구성이 필요하며 이 프로젝트는 해당 서버나 연결 URL을 제공하지 않습니다. 지금은 위 로컬 클라이언트에서 사용하세요. 계정의 기능 제공 여부와 원격 연결 절차는 [ChatGPT 공식 개발자 모드 안내](https://platform.openai.com/docs/guides/developer-mode)를 확인하세요.
+원격 연결에는 Vercel에 배포한 서버의 `https://<배포도메인>/api/mcp`를 사용합니다. 로컬 stdio 실행 명령은 웹 클라이언트에 직접 등록하지 않습니다. 원격 서버의 빌드·환경변수·실제 호출 검증은 [Vercel 배포 안내](docs/vercel-deployment.md)를 참고하세요. 계정의 기능 제공 여부와 원격 연결 절차는 [ChatGPT 공식 개발자 모드 안내](https://platform.openai.com/docs/guides/developer-mode)를 확인하세요.
 
 ## 대표 사용 예시
 
