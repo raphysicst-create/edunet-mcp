@@ -5,6 +5,8 @@
 .scratch
 node_modules
 dist
-evals/results
+evals
+tests
+docs
 releases
 *.log
