@@ -27,13 +27,13 @@
 
 ## 보존한 산출물
 
-버전 관리용 [관측 요약 JSON](achievement-product-baseline-2026-09-18.json)은 코퍼스·원본 실행·대조 질의·채점기 해시와 질의별 관측을 포함한다. 아래 로컬 원본은 git에서 제외되며 기존 실행을 덮어쓰지 않는다.
+버전 관리용 [관측 요약 JSON](achievement-product-baseline-2026-09-18.json)은 코퍼스·원본 실행·대조 질의·채점기 해시와 질의별 관측을 포함한다. 아래는 최초 실행 작업공간에만 남아 있는 로컬 경로다. git에서 제외되므로 GitHub나 새 clone에서는 이 원본을 열 수 없다. 기존 실행을 덮어쓰지 않는다.
 
-- [실제 검색 30개](../evals/results/achievement-product-discovery-2026-09-18.json)
-- [준비 상태](../evals/results/achievement-product-audit-2026-09-18.json)
-- [사람 검토 양식](../evals/results/achievement-product-review-2026-09-18.json)
-- [미측정 채점 결과](../evals/results/achievement-product-grade-2026-09-18.json)
-- [대조 질의 3개](../.scratch/achievement-product-controls-1789689865310.json)
-- [전체 회귀 통과](../evals/results/achievement-product-contract-fixed-2026-09-18.json)
+- 실제 검색 30개: `evals/results/achievement-product-discovery-2026-09-18.json`
+- 준비 상태: `evals/results/achievement-product-audit-2026-09-18.json`
+- 사람 검토 양식: `evals/results/achievement-product-review-2026-09-18.json`
+- 미측정 채점 결과: `evals/results/achievement-product-grade-2026-09-18.json`
+- 대조 질의 3개: `.scratch/achievement-product-controls-1789689865310.json`
+- 전체 회귀 통과: `evals/results/achievement-product-contract-fixed-2026-09-18.json`
 
 다음 평가 입력은 독립적으로 확보한 실제 문서 20~50개와 사람이 검토한 문서 전체 gold다. 이를 고정한 새 코퍼스로 다시 수집·채점해야 한다. 코퍼스 승인으로 해시가 바뀌면 이번 실행을 그대로 새 gold에 결합하지 않는다.

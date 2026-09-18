@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 export const FIELDS = ['grade', 'subject', 'domain', 'achievementStandardCode', 'achievementStandardText', 'achievementLevel', 'description'];
-export const SCORER_VERSION = '1.0.0';
+export const SCORER_VERSION = '1.1.0';
 const own = (value, key) => Object.hasOwn(value ?? {}, key);
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const nonempty = value => typeof value === 'string' && value.trim().length > 0;
@@ -124,13 +124,18 @@ const equal = (field, actual, expected) => {
 };
 const exactRecord = (record, gold) => object(record) && FIELDS.every(field => equal(field, raw(record, field), gold[field]));
 
-function evidenceMatches(record, gold, field, contentHash) {
+function evidenceStatus(record, gold, field, contentHash) {
   const spans = record?.[field]?.evidence, expected = gold.evidence[field];
-  if (!Array.isArray(spans) || !spans.length) return false;
-  const matches = (actual, target) => object(actual) && actual.sourceHash === contentHash && actual.quote === target.quote && validLocation(actual.location)
+  if (!Array.isArray(spans) || !spans.length) return 'mismatch';
+  const matchesReviewedScope = (actual, target) => object(actual) && actual.sourceHash === contentHash && actual.quote === target.quote && validLocation(actual.location)
     && Object.entries(target.location).every(([key, value]) => actual.location[key] === value);
-  return expected.every(target => spans.some(actual => matches(actual, target)))
+  const allMatch = matches => expected.every(target => spans.some(actual => matches(actual, target)))
     && spans.every(actual => expected.some(target => matches(actual, target)));
+  // Human gold verifies only its own coordinate keys. Extra parser coordinates
+  // need review even when they agree with every reviewed coordinate.
+  if (allMatch((actual, target) => matchesReviewedScope(actual, target)
+    && Object.keys(actual.location).length === Object.keys(target.location).length)) return 'verified';
+  return allMatch(matchesReviewedScope) ? 'additional_location_review_needed' : 'mismatch';
 }
 
 // Hungarian assignment: exact-record count takes priority over field agreement,
@@ -145,7 +150,7 @@ function matchRecords(actual, expected, contentHash) {
     const common = FIELDS.filter(field => gold[field] !== null && equal(field, raw(record, field), gold[field]));
     if (!common.length) return 0;
     return Number(exactRecord(record, gold)) * exactScale + common.length * evidenceScale
-      + common.filter(field => evidenceMatches(record, gold, field, contentHash)).length;
+      + common.filter(field => evidenceStatus(record, gold, field, contentHash) === 'verified').length;
   }));
   if (weights.every(row => row.every(weight => weight === 0))) return [];
   const u = Array(n + 1).fill(0), v = Array(n + 1).fill(0), p = Array(n + 1).fill(0), way = Array(n + 1).fill(0);
@@ -204,7 +209,7 @@ export function scoreProduct(corpus, run, { k = 10, minDocuments = 20 } = {}) {
     queryCases.push(result);
   }
   const records = counts(), levelRecords = counts(), fields = Object.fromEntries(FIELDS.map(field => [field, counts()]));
-  let labelsCorrect = 0, labelsTotal = 0, evidenceCorrect = 0, evidenceTotal = 0;
+  let labelsCorrect = 0, labelsTotal = 0, evidenceCorrect = 0, evidenceTotal = 0, evidenceUnverifiedLocationFields = 0;
   let selectionCorrect = 0, abstainCorrect = 0, abstainTotal = 0, selectableTotal = 0, selected = 0, completeDocuments = 0;
   for (const document of docs) {
     const observation = documentRuns.get(document.id), reasons = [];
@@ -221,7 +226,7 @@ export function scoreProduct(corpus, run, { k = 10, minDocuments = 20 } = {}) {
     const pairs = usable ? matchRecords(actual, document.records, document.contentHash) : [];
     const pairedActual = new Set(pairs.map(([index]) => index)), pairedGold = new Set(pairs.map(([, index]) => index));
     const allPairs = [...pairs, ...actual.flatMap((_, index) => pairedActual.has(index) ? [] : [[index, -1]]), ...document.records.flatMap((_, index) => pairedGold.has(index) ? [] : [[-1, index]])];
-    const local = counts(); let localLabels = 0, localEvidence = 0;
+    const local = counts(); let localLabels = 0, localEvidence = 0, localUnverifiedLocationFields = 0;
     for (const [a, g] of allPairs) {
       const prediction = a >= 0 ? actual[a] : undefined, gold = g >= 0 ? document.records[g] : undefined;
       const exact = prediction !== undefined && gold !== undefined && exactRecord(prediction, gold);
@@ -241,25 +246,29 @@ export function scoreProduct(corpus, run, { k = 10, minDocuments = 20 } = {}) {
         }
         if (present || expected) {
           evidenceTotal++;
-          if (correct && evidenceMatches(prediction, gold, field, document.contentHash)) evidenceCorrect++; else localEvidence++;
+          const status = correct ? evidenceStatus(prediction, gold, field, document.contentHash) : 'mismatch';
+          if (status === 'verified') evidenceCorrect++;
+          else if (status === 'additional_location_review_needed') { evidenceUnverifiedLocationFields++; localUnverifiedLocationFields++; }
+          else localEvidence++;
         }
       }
     }
     if (local.fp || local.fn) reasons.push('record_mismatch');
     if (localLabels) reasons.push('raw_label_mismatch');
     if (localEvidence) reasons.push('field_evidence_mismatch');
+    if (localUnverifiedLocationFields) reasons.push('field_evidence_additional_location_review_needed');
     const auto = observation?.autoSelection, expectedSelection = document.selection;
     const selectionPass = auto?.action === expectedSelection.expectedAction && (auto.action === 'abstain' || expectedSelection.acceptableAttachmentIds.includes(auto.attachmentId));
     if (selectionPass) selectionCorrect++; else reasons.push('automatic_attachment_selection_mismatch');
     if (expectedSelection.expectedAction === 'abstain') { abstainTotal++; if (selectionPass) abstainCorrect++; }
     else { selectableTotal++; if (auto?.action === 'select') selected++; }
-    documentCases.push({ id: document.id, format: document.attachment.format, positive: document.records.some(record => nonempty(record.achievementLevel) && nonempty(record.description)), complete, records: metric(local), labelErrors: localLabels, evidenceErrors: localEvidence, selectionPass, pass: reasons.length === 0, reasons });
+    documentCases.push({ id: document.id, format: document.attachment.format, positive: document.records.some(record => nonempty(record.achievementLevel) && nonempty(record.description)), complete, records: metric(local), labelErrors: localLabels, evidenceErrors: localEvidence, evidenceUnverifiedLocationFields: localUnverifiedLocationFields, selectionPass, pass: reasons.length === 0, reasons });
   }
   const positiveDocs = docs.filter(document => document.records.some(record => nonempty(record.achievementLevel) && nonempty(record.description)));
   const positiveDocuments = positiveDocs.length, uniquePositiveFiles = new Set(positiveDocs.map(document => document.contentHash)).size;
   const metrics = { discoveryRecallAtK: { ...ratio(found, relevant), k, reference: 'Human-judged resource set; not all documents on EDUNET.' },
     negativeQueryAccuracy: ratio(negativeCorrect, negativeTotal), records: metric(records), levelRecords: metric(levelRecords), fields: Object.fromEntries(FIELDS.map(field => [field, metric(fields[field])])),
-    levelRawLabelFidelity: ratio(labelsCorrect, labelsTotal), evidenceCorrectness: ratio(evidenceCorrect, evidenceTotal),
+    levelRawLabelFidelity: ratio(labelsCorrect, labelsTotal), evidenceCorrectness: { ...ratio(evidenceCorrect, evidenceTotal), unverifiedLocationFields: evidenceUnverifiedLocationFields },
     attachmentSelection: { ...ratio(selectionCorrect, docs.length), accuracy: docs.length ? selectionCorrect / docs.length : null, selectionCoverage: ratio(selected, selectableTotal) },
     abstentionCoverage: ratio(abstainCorrect, abstainTotal), documentCompleteness: ratio(completeDocuments, docs.length),
     macroDocumentRecordRecall: { value: positiveDocuments ? documentCases.filter(c => c.positive).reduce((sum, c) => sum + (c.records.recall ?? 0), 0) / positiveDocuments : null, documents: positiveDocuments } };
@@ -268,7 +277,7 @@ export function scoreProduct(corpus, run, { k = 10, minDocuments = 20 } = {}) {
   if (uniquePositiveFiles < minDocuments) failures.push('insufficient_reviewed_positive_documents');
   if (pendingDocuments || pendingQueries) failures.push('corpus_review_pending');
   if (!relevant) failures.push('no_approved_positive_discovery_queries');
-  if (run.completed === false) failures.push('collection_not_completed');
+  if (run.completed !== true) failures.push('collection_not_completed');
   const meets = (value, target) => value !== null && value >= target;
   const targetChecks = {
     discoveryRecallAtK: meets(metrics.discoveryRecallAtK.value, targets.discoveryRecallAtK),
@@ -280,7 +289,7 @@ export function scoreProduct(corpus, run, { k = 10, minDocuments = 20 } = {}) {
   };
   for (const [name, passed] of Object.entries(targetChecks)) if (!passed) failures.push(`target_not_met:${name}`);
   const ready = uniquePositiveFiles >= minDocuments && !pendingDocuments && !pendingQueries && relevant > 0;
-  const complete = ready && run.completed !== false && completeDocuments === docs.length && queryCases.every(query => query.observed);
+  const complete = ready && run.completed === true && completeDocuments === docs.length && queryCases.every(query => query.observed);
   if (completeDocuments !== docs.length) failures.push('incomplete_documents');
   if (queries.some(query => !queryRuns.has(query.id))) failures.push('missing_query_observations');
   const pass = complete && Object.values(targetChecks).every(Boolean);

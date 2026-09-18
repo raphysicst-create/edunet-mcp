@@ -54,6 +54,17 @@ test('pending review or interrupted run cannot fully pass', () => {
   assert.equal(score(interrupted).complete, false); assert.equal(score(interrupted).pass, false);
 });
 
+for (const declaration of [undefined, null, 'false', 'true', 0, 1, {}, []]) {
+  test(`completion requires boolean true: ${JSON.stringify(declaration) ?? 'missing'} is incomplete`, () => {
+    const data = fixture();
+    if (declaration === undefined) delete data.run.completed; else data.run.completed = declaration;
+    const report = score(data);
+    assert.equal(report.status, 'fail'); assert.equal(report.complete, false); assert.equal(report.pass, false);
+    assert.ok(report.failures.includes('collection_not_completed'));
+    assert.equal(report.metrics.records.recall, 1);
+  });
+}
+
 test('missing expected observations remain in recall and selection denominators', () => {
   const data = fixture(); data.run.queries = []; data.run.documents = [];
   const report = score(data);
@@ -107,6 +118,65 @@ test('swapped row evidence fails even when raw values and hashes are correct', (
   const report = score(data);
   assert.equal(report.metrics.records.recall, 1); assert.ok(report.metrics.evidenceCorrectness.value < 1);
   assert.equal(report.pass, false); assert.ok(report.cases.documents[0].reasons.includes('field_evidence_mismatch'));
+});
+
+for (const location of [{ page: 1, row: 999 }, { page: 1, block: 4, charStart: 0, charEnd: 12 }]) {
+  test(`additional location coordinates require review: ${JSON.stringify(location)}`, () => {
+    const data = fixture();
+    data.corpus.documents[0].records[0].evidence.description[0].location = { page: 1 };
+    data.run.documents[0].records[0].description.evidence[0].location = location;
+    const report = score(data), document = report.cases.documents[0];
+    assert.equal(report.scorerVersion, '1.1.0');
+    assert.equal(report.metrics.records.recall, 1);
+    assert.equal(report.metrics.evidenceCorrectness.value, 0.8);
+    assert.equal(report.metrics.evidenceCorrectness.unverifiedLocationFields, 1);
+    assert.equal(document.evidenceUnverifiedLocationFields, 1);
+    assert.equal(document.evidenceErrors, 0);
+    assert.ok(document.reasons.includes('field_evidence_additional_location_review_needed'));
+    assert.ok(!document.reasons.includes('field_evidence_mismatch'));
+    assert.equal(document.pass, false); assert.equal(report.pass, false);
+  });
+}
+
+test('identical reviewed location key sets and values receive full evidence credit', () => {
+  for (const location of [{ page: 1 }, { page: 1, table: 1, row: 999, column: 2 }, { page: 1, block: 4, charStart: 0, charEnd: 12 }]) {
+    const data = fixture();
+    data.corpus.documents[0].records[0].evidence.description[0].location = structuredClone(location);
+    data.run.documents[0].records[0].description.evidence[0].location = structuredClone(location);
+    const report = score(data);
+    assert.equal(report.metrics.evidenceCorrectness.value, 1);
+    assert.equal(report.metrics.evidenceCorrectness.unverifiedLocationFields, 0);
+    assert.equal(report.pass, true);
+  }
+});
+
+test('conflicting reviewed coordinates or missing reviewed coordinates are evidence mismatches', () => {
+  for (const location of [{ page: 2, row: 999 }, { page: 1 }, { page: 1, table: 1, row: 2, column: 2, block: 4 }]) {
+    const data = fixture(); data.run.documents[0].records[0].description.evidence[0].location = location;
+    const report = score(data), document = report.cases.documents[0];
+    assert.equal(report.metrics.evidenceCorrectness.value, 0.8);
+    assert.equal(report.metrics.evidenceCorrectness.unverifiedLocationFields, 0);
+    assert.equal(document.evidenceErrors, 1);
+    assert.ok(document.reasons.includes('field_evidence_mismatch'));
+    assert.equal(report.pass, false);
+  }
+});
+
+test('additional location review never excuses a wrong quote, source hash, or field value', () => {
+  for (const mutate of [
+    value => { value.evidence[0].quote = '다른 문장'; },
+    value => { value.evidence[0].sourceHash = 'sha256:' + 'b'.repeat(64); },
+    value => { value.raw = '다른 설명'; },
+  ]) {
+    const data = fixture();
+    data.corpus.documents[0].records[0].evidence.description[0].location = { page: 1 };
+    data.run.documents[0].records[0].description.evidence[0].location = { page: 1, row: 999 };
+    mutate(data.run.documents[0].records[0].description);
+    const report = score(data);
+    assert.equal(report.metrics.evidenceCorrectness.unverifiedLocationFields, 0);
+    assert.equal(report.cases.documents[0].evidenceErrors, 1);
+    assert.equal(report.pass, false);
+  }
 });
 
 test('missing evidence, wrong quote, extra unsupported span, and wrong source hash fail', () => {
