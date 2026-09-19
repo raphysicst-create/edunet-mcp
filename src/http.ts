@@ -79,11 +79,17 @@ async function readBounded(response: Response, signal: AbortSignal, maximum: num
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
+  let reads = 0;
   let completed = false;
   try {
     for (;;) {
+      // An always-ready stream can otherwise monopolize microtasks and starve both
+      // the deadline and caller-cancellation timers, even without sending bytes.
+      if (++reads % 256 === 0) await raceAbort(new Promise<void>((resolve) => setImmediate(resolve)), signal);
       const chunk = await raceAbort(reader.read(), signal);
       if (chunk.done) { completed = true; break; }
+      if (!(chunk.value instanceof Uint8Array)) throw new EdunetError("INVALID_RESPONSE");
+      if (chunk.value.byteLength === 0) continue;
       size += chunk.value.byteLength;
       if (size > maximum) throw new EdunetError("RESPONSE_TOO_LARGE");
       chunks.push(chunk.value);

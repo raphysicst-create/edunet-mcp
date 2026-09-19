@@ -8,6 +8,24 @@ const MAX_STREAM = 32 * 1024 * 1024;
 const MAX_ENTRIES = 500;
 const fail = (code: string, message: string): never => { throw new ParseDocumentError(code, message); };
 
+/** JSZip can replace the raw directory name with a Unicode path extra field. */
+function validateZipExtras(data: Buffer, start: number, length: number, name: string): void {
+  const end = start + length;
+  for (let offset = start; offset < end;) {
+    if (offset + 4 > end) fail("CORRUPTED_ARCHIVE", "HWPX extra field is incomplete");
+    const kind = data.readUInt16LE(offset);
+    const size = data.readUInt16LE(offset + 2);
+    offset += 4;
+    if (offset + size > end) fail("CORRUPTED_ARCHIVE", "HWPX extra field exceeds its entry");
+    // A conflicting alias would bypass XML checks or overwrite a checked section.
+    // Ordinary UTF-8 names and matching Unicode extras remain supported.
+    if (kind === 0x7075 && (size < 5 || data[offset] === 1 && data.toString("utf8", offset + 5, offset + size) !== name)) {
+      fail("CORRUPTED_ARCHIVE", "HWPX Unicode path differs from its validated entry");
+    }
+    offset += size;
+  }
+}
+
 /** Validate actual decompressed bytes before handing an archive to a layout parser. */
 export function preflightHwpx(bytes: Uint8Array): void {
   const data = Buffer.from(bytes);
@@ -33,6 +51,7 @@ export function preflightHwpx(bytes: Uint8Array): void {
     if (end > data.length) fail("CORRUPTED_ARCHIVE", "HWPX archive entry extends beyond the file");
     const name = data.toString("utf8", offset + 30, offset + 30 + nameLength);
     if (names.has(name) || name.includes("..") || name.startsWith("/")) fail("CORRUPTED_ARCHIVE", "HWPX archive has ambiguous entry paths");
+    validateZipExtras(data, offset + 30 + nameLength, extraLength, name);
     names.set(name, offset);
     let expanded: Buffer;
     try {
@@ -62,6 +81,7 @@ export function preflightHwpx(bytes: Uint8Array): void {
     const commentLength = data.readUInt16LE(offset + 32);
     if (offset + 46 + nameLength + extraLength + commentLength > data.length) fail("CORRUPTED_ARCHIVE", "HWPX directory entry extends beyond the file");
     const name = data.toString("utf8", offset + 46, offset + 46 + nameLength);
+    validateZipExtras(data, offset + 46 + nameLength, extraLength, name);
     const local = data.readUInt32LE(offset + 42);
     // Bind each name to its own validated payload, not merely any local header.
     if (names.get(name) !== local) fail("CORRUPTED_ARCHIVE", "HWPX directory differs from local entries");

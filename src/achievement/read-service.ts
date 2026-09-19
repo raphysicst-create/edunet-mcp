@@ -35,6 +35,10 @@ export function createAchievementReader(deps:ReadDependencies) {
     const input=readAchievementInputSchema.parse(rawInput);
     const payload=deps.references.verify(input.achievementRef,"achievement");
     const resource=resourceIdentitySchema.parse(payload.resource);
+    // Reject locally invalid references before spending any upstream metadata budget.
+    const requestedAttachment=input.attachmentRef?deps.references.verify(input.attachmentRef,"attachment"):undefined;
+    const requestedCursor=input.cursor?deps.references.verify(input.cursor,"cursor"):undefined;
+    if(requestedAttachment && requestedAttachment.resourceId!==identity(resource) || requestedCursor && requestedCursor.resourceId!==identity(resource)) throw new ReferenceError();
     const resourceRef=deps.references.issue("resource",{resource});
     const base:ReadAchievementResponse={kind:"edunet_achievement_read",status:"metadata_only",source:{resourceRef,achievementRef:input.achievementRef,title:resource.title,...(resource.sourceUrl?{sourceUrl:resource.sourceUrl}:{}),sourceSystem:"edunet",retrievedAt:new Date().toISOString(),...(resource.snippet?{searchEvidence:[{quote:resource.snippet,location:{anchor:"metadata-snippet"}}]}:{})},records:[],warnings:[],visualContentInterpreted:false};
     let details:ResourceDetails;
@@ -47,9 +51,10 @@ export function createAchievementReader(deps:ReadDependencies) {
     if(details.warnings.some(w=>["attachment_metadata_unavailable","attachment_metadata_timeout","detail_path_unverified"].includes(w.code))) return {...base,status:"source_unavailable"};
     base.source.title=details.resource.title;
     let listOffset=0;
+    const attachmentListHash=createHash("sha256").update(JSON.stringify(details.attachments.map(item=>[item.id,item.fileName,item.format,item.byteSize,item.declaredMimeType,item.url]))).digest("hex");
     if(input.cursor && !input.attachmentRef) {
-      const cursor=deps.references.verify(input.cursor,"cursor");
-      if(cursor.mode!=="attachments" || cursor.resourceId!==identity(resource) || !Number.isSafeInteger(cursor.offset) || Number(cursor.offset)<0) throw new ReferenceError();
+      const cursor=requestedCursor!;
+      if(cursor.mode!=="attachments" || cursor.resourceId!==identity(resource) || cursor.attachmentListHash!==attachmentListHash || !Number.isSafeInteger(cursor.offset) || Number(cursor.offset)<0) throw new ReferenceError();
       listOffset=Number(cursor.offset);
     }
     base.attachments=[];
@@ -61,10 +66,10 @@ export function createAchievementReader(deps:ReadDependencies) {
       base.attachments.push(candidate);listChars+=cost;
     }
     const nextListOffset=listOffset+base.attachments.length;
-    base.pagination={hasMore:nextListOffset<details.attachments.length,...(nextListOffset<details.attachments.length?{cursor:deps.references.issue("cursor",{mode:"attachments",resourceId:identity(resource),offset:nextListOffset})}:{})};
+    base.pagination={hasMore:nextListOffset<details.attachments.length,...(nextListOffset<details.attachments.length?{cursor:deps.references.issue("cursor",{mode:"attachments",resourceId:identity(resource),attachmentListHash,offset:nextListOffset})}:{})};
     let attachment:ResolvedAttachment|undefined,attachmentRef=input.attachmentRef;
     if(attachmentRef) {
-      const scoped=deps.references.verify(attachmentRef,"attachment");
+      const scoped=requestedAttachment!;
       if(scoped.resourceId!==identity(resource)) throw new ReferenceError();
       attachment=details.attachments.find(item=>item.id===scoped.attachmentId);
       if(!attachment) throw new ReferenceError();
@@ -81,7 +86,7 @@ export function createAchievementReader(deps:ReadDependencies) {
     if(!enabled(attachment.format,deps.config)) return {...base,status:"unsupported_format",warnings:[...base.warnings,{code:"FORMAT_DISABLED",message:"이 형식은 검증·기능 플래그 정책에 따라 읽기가 비활성화되었습니다."}]};
     let offset=0,rawOffset=0,rawCharOffset=0,prior:Record<string,unknown>|undefined;
     if(input.cursor) {
-      prior=deps.references.verify(input.cursor,"cursor");
+      prior=requestedCursor!;
       if(prior.resourceId!==identity(resource)||prior.attachmentId!==attachment.id||prior.mode!==mode||prior.filters!==filtersKey(input)||!Number.isSafeInteger(prior.offset)||Number(prior.offset)<0||!Number.isSafeInteger(prior.rawOffset)||Number(prior.rawOffset)<0) throw new ReferenceError();
       if(!Number.isSafeInteger(prior.rawCharOffset)||Number(prior.rawCharOffset)<0) throw new ReferenceError();
       offset=Number(prior.offset);rawOffset=Number(prior.rawOffset);rawCharOffset=Number(prior.rawCharOffset);

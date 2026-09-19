@@ -153,18 +153,18 @@ function nullableText(element: XmlElement | undefined): string | null {
 }
 
 function firstChild(element: XmlElement, names: readonly string[]): XmlElement | undefined {
-  for (const name of names) {
-    const match = child(element, name);
-    if (match !== undefined) return match;
-  }
-  return undefined;
+  // Every spelling represents the same singleton. Check all aliases before
+  // selecting one so a preferred spelling cannot conceal conflicting data.
+  const matches = names.map(name => child(element, name)).filter((match): match is XmlElement => match !== undefined);
+  if (new Set(matches.map(cleanText)).size > 1) return invalidResponse();
+  return matches[0];
 }
 
 function safeLink(value: string | null): string | null {
   if (value === null) return null;
   // URL() repairs missing slashes, backslashes and raw whitespace. Returning
   // the unrepaired input would give clients an ambiguous provenance link.
-  if (!/^https?:\/\/[^/\\]/i.test(value) || /[\u0000-\u0020\u007f\\]/u.test(value)) return null;
+  if (!/^https?:\/\/[^/\\]/i.test(value) || /[\s\u0000-\u0020\u007f\\<>]/u.test(value)) return null;
   try {
     const parsed = new URL(value);
     return ["http:", "https:"].includes(parsed.protocol) && !parsed.username && !parsed.password ? value : null;
@@ -190,7 +190,12 @@ function parseItem(data: XmlElement, secrets: readonly string[]): ParsedEdunetIt
   const title = protectedText(child(data, "ttl"), secrets);
   const contentValue = redact(cleanText(child(data, "cn")), secrets);
   const category = protectedText(firstChild(data, ["category_nm", "ctgry_nm"]), secrets);
-  const rawUrl = nullableText(child(data, "conts_link"));
+  const link = child(data, "conts_link");
+  // Source URLs are identifiers, not highlighted display text. Removing tags
+  // or whitespace could fabricate a different, apparently valid source URL.
+  const rawUrl = link === undefined || link.children.some(part => typeof part !== "string")
+    ? null
+    : decodeHtmlEntities(textOf(link));
   const protectedUrl = rawUrl === null ? null : redact(rawUrl, secrets);
   // A link containing a credential is not a usable provenance link after
   // redaction, so omit it instead of returning a syntactically altered URL.
@@ -217,6 +222,16 @@ export function parseEdunetResponse(
   // these enter MCP text or source links even when tag syntax is valid.
   if (forbiddenXmlCharacters.test(decoded.text)) return invalidResponse();
   if (/<!DOCTYPE\b|<!ENTITY\b/i.test(decoded.text)) return invalidResponse();
+  // fast-xml-parser drops some invalid numeric references (including NUL and
+  // surrogates). Validate them before parsing can silently erase the evidence.
+  // Comments and CDATA contain literal text, not XML entity references.
+  const entityText = decoded.text.replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+  if (/&#(?!(?:\d+|x[0-9a-f]+);)/i.test(entityText)) return invalidResponse();
+  for (const match of entityText.matchAll(/&#(x[0-9a-f]+|\d+);/gi)) {
+    const reference = match[1]!;
+    if (reference[0]?.toLowerCase() === "x") entityCodePoint(reference.slice(1), 16);
+    else entityCodePoint(reference, 10);
+  }
   if (XMLValidator.validate(decoded.text, { allowBooleanAttributes: false }) !== true) return invalidResponse();
 
   let raw: unknown;

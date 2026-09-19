@@ -12,9 +12,9 @@ export function createWorkerGateway(options:GatewayOptions):WorkerGateway {
   const logger=createLogger();
   let active=0, failures=0, openUntil=0;
   return { async run(handle,signal) {
+    if (signal?.aborted) throw new WorkerUnavailableError("ABORTED");
     if (now() < openUntil) throw new WorkerUnavailableError("WORKER_CIRCUIT_OPEN");
     if (active >= (options.maxConcurrent ?? 2)) throw new WorkerUnavailableError("WORKER_BUSY");
-    if (signal?.aborted) throw new WorkerUnavailableError("ABORTED");
     active++;
     let child:ChildProcess|undefined;
     try {

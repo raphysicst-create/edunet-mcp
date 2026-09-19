@@ -23,10 +23,16 @@ class RequestFailure extends Error {
   constructor(readonly status: number, readonly code: number, message: string) { super(message); }
 }
 
+function decodeBody(bytes: Uint8Array): string {
+  try { return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes); }
+  catch { throw new RequestFailure(400, -32700, "Invalid JSON body."); }
+}
+
 async function readBody(request: RemoteRequest, limit: number): Promise<string> {
   // Vercel may have parsed JSON before invoking the Node function.
   if (request.body !== undefined) {
-    const body = Buffer.isBuffer(request.body) ? request.body.toString("utf8")
+    if (Buffer.isBuffer(request.body) && request.body.length > limit) throw new RequestFailure(413, -32600, "Request body too large.");
+    const body = Buffer.isBuffer(request.body) ? decodeBody(request.body)
       : typeof request.body === "string" ? request.body : JSON.stringify(request.body);
     if (body === undefined) throw new RequestFailure(400, -32700, "Invalid JSON body.");
     if (Buffer.byteLength(body) > limit) throw new RequestFailure(413, -32600, "Request body too large.");
@@ -48,7 +54,7 @@ async function readBody(request: RemoteRequest, limit: number): Promise<string> 
     }
     chunks.push(bytes);
   }
-  return Buffer.concat(chunks).toString("utf8");
+  return decodeBody(Buffer.concat(chunks));
 }
 
 function errorResponse(status: number, code: number, message: string): Response {
@@ -73,13 +79,24 @@ export function createRemoteHandler(factory: ServerFactory = createDefaultFactor
     response.setHeader("Cache-Control", "no-store");
     response.setHeader("X-Content-Type-Options", "nosniff");
 
-    const abortable = <T>(work: Promise<T>): Promise<T> => new Promise((resolve, reject) => {
-      const abort = (): void => reject(new Error("Request disconnected."));
+    const abortable = <T>(work: Promise<T>, discard?: (value: T) => Promise<void>): Promise<T> => new Promise((resolve, reject) => {
+      const abort = (): void => { done(); reject(new Error("Request disconnected.")); };
       const done = (): void => controller.signal.removeEventListener("abort", abort);
       controller.signal.addEventListener("abort", abort, { once: true });
       if (controller.signal.aborted) abort();
-      void work.then(value => { done(); resolve(value); }, error => { done(); reject(error); });
+      void work.then(value => {
+        done();
+        if (controller.signal.aborted) {
+          if (discard) void Promise.resolve().then(() => discard(value)).catch(() => logger.warn("remote_cleanup_failed"));
+          abort();
+        } else resolve(value);
+      }, error => { done(); reject(error); });
     });
+
+    const openServer = (): Promise<McpServer> => abortable(Promise.resolve().then(() => {
+      if (controller.signal.aborted) throw new Error("Request disconnected.");
+      return factory();
+    }), server => server.close());
 
     const send = async (result: Response): Promise<void> => {
       if (response.destroyed || controller.signal.aborted) return;
@@ -105,9 +122,10 @@ export function createRemoteHandler(factory: ServerFactory = createDefaultFactor
       }
       const host = request.headers.host ?? "localhost";
       const protocol = host === "localhost" || host.startsWith("localhost:") || host.startsWith("127.0.0.1:") || host.startsWith("[::1]:") ? "http" : "https";
-      const url = new URL(request.url ?? "/api/mcp", `${protocol}://${host}`);
+      const base = new URL(`${protocol}://${host}`);
+      const url = new URL(request.url ?? "/api/mcp", base);
       const origin = request.headers.origin;
-      if (origin !== undefined && origin !== url.origin && !options.allowedOrigins?.includes(origin)) {
+      if (url.origin !== base.origin || (origin !== undefined && origin !== base.origin && !options.allowedOrigins?.includes(origin))) {
         await send(errorResponse(403, -32000, "Origin not allowed."));
         return;
       }
@@ -124,16 +142,17 @@ export function createRemoteHandler(factory: ServerFactory = createDefaultFactor
       const webRequest = new Request(url, { method: "POST", headers, body, signal: controller.signal });
       let result: Response;
       if (await isLegacyRequest(webRequest)) {
-        const server = await factory();
+        const server = await openServer();
         const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
         closeServing = async () => { await server.close(); };
+        if (controller.signal.aborted) return;
         await server.connect(transport);
         if (controller.signal.aborted) return;
         // The legacy JSON response promise can remain pending after close().
         // Disconnect must also settle the Vercel invocation itself.
         result = await abortable(transport.handleRequest(webRequest));
       } else {
-        const handler = createMcpHandler(() => factory(), { legacy: "reject", responseMode: "json", maxSubscriptions: 0,
+        const handler = createMcpHandler(openServer, { legacy: "reject", responseMode: "json", maxSubscriptions: 0,
           onerror: () => logger.warn("remote_protocol_error"),
         });
         closeServing = () => handler.close();
