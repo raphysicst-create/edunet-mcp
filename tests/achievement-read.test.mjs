@@ -5,6 +5,7 @@ import { createServer } from '../dist/server.js';
 import { ReferenceCodec } from '../dist/achievement/references.js';
 import { createAchievementReader } from '../dist/achievement/read-service.js';
 import { WorkerUnavailableError } from '../dist/achievement/gateway.js';
+import { scopeCodeResult } from '../dist/worker/achievement/scope.js';
 
 const secret='test-only-32-byte-reference-secret-123456';
 const config={searchEnabled:true,pdfReadEnabled:true,hwpReadEnabled:true,hwpxReadEnabled:false,autoAttachmentSelectionEnabled:false,resourceReadEnabled:true,referenceSecret:secret};
@@ -87,4 +88,57 @@ test('enabled MCP tools expose discovery/read/resource without changing search o
 test('missing achievement secret is isolated from ordinary search',async()=>{
   const server=createServer(async()=>{throw new Error('test');},{achievement:{config:{...config,referenceSecret:undefined}}});const client=new Client({name:'missing-key',version:'1'});const [ct,st]=InMemoryTransport.createLinkedPair();
   try {await server.connect(st);await client.connect(ct);const bad=await client.callTool({name:'search_edunet_achievement',arguments:{subject:'과학'}});assert.match(bad.content[0].text,/CONFIGURATION/);assert.equal((await client.listTools()).tools[0].name,'search_edunet');}finally{await client.close();await server.close();}
+});
+
+test('worker and reader normalize code notation and bind equivalent cursors without substituting codes',async()=>{
+ const s=setup();const run=s.deps.gateway.run;
+ s.deps.gateway.run=async handle=>{const result=await run(handle);scopeCodeResult(result,s.references.verify(handle,'worker'));return result;};
+ const metadata=await s.read({achievementRef:s.achievementRef});
+ const args={achievementRef:s.achievementRef,attachmentRef:metadata.attachments[0].attachmentRef,achievementStandardCode:'9과01-01',maxItems:1};
+ const first=await s.read(args);assert.equal(first.records[0].id,'r1');
+ const next=await s.read({...args,achievementStandardCode:' [ 9과01-01 ] ',cursor:first.pagination.cursor});
+ assert.equal(next.records[0].id,'r2');assert.equal(next.pagination.hasMore,false);
+ await assert.rejects(s.read({...args,achievementStandardCode:'9국01-01',cursor:first.pagination.cursor}),/참조/);
+ const absent=await s.read({...args,achievementStandardCode:'6국01-01'});
+ assert.equal(absent.status,'metadata_only');assert.equal(absent.records.length,0);
+ assert.ok(absent.warnings.some(w=>w.code==='NO_MATCHING_RECORDS'));assert.equal(absent.rawBlocks.length,1);
+ // The reader must also enforce this boundary when the Worker returns unscoped records.
+ s.deps.gateway.run=run;
+ s.result.records[0].achievementStandardCode.normalized='[6국01-01]';
+ assert.equal((await s.read({...args,achievementStandardCode:'6국01-01'})).records.length,0);
+ for(const code of ['[10공수1-01-01]','[12미감01-01]']) {
+   s.result.records=[record('course')];s.result.records[0].achievementStandardCode.raw=code;
+   const response=await s.read({...args,achievementStandardCode:code.slice(1,-1)});
+   assert.equal(response.records[0].achievementStandardCode.raw,code);
+ }
+});
+
+test('A-E coverage remains explicit across response limits and legacy Workers',async()=>{
+ const s=setup();
+ s.result.records=['A','B','C','D','E'].map(label=>({...record(label,label),achievementLevel:{rawLabel:label,labelSystem:'abc',evidence:evidence(label)}}));
+ const metadata=await s.read({achievementRef:s.achievementRef});
+ const args={achievementRef:s.achievementRef,attachmentRef:metadata.attachments[0].attachmentRef,achievementStandardCode:'9과01-01',maxItems:2};
+ let cursor;const seen=[];
+ for(const remaining of [3,1,0]) {
+   const response=await s.read({...args,...(cursor?{cursor}:{})});
+   const coverage=response.levelCoverage;
+   assert.deepEqual(coverage.extractedLabels,['A','B','C','D','E']);
+   assert.equal(coverage.matchingRecordCount,5);assert.equal(coverage.remainingRecordCount,remaining);
+   assert.equal(coverage.allMatchingRecordsDelivered,remaining===0);assert.equal(coverage.sourceCompleteness,'unverified');
+   assert.equal(response.warnings.some(w=>w.code==='LEVEL_RECORDS_REMAIN'),remaining>0);
+   assert.ok(response.records.every(r=>r.achievementLevel.labelSystem==='alphabetic'));
+   assert.ok(response.records.reduce((sum,record)=>sum+JSON.stringify(record).length,0)<=8000);
+   seen.push(...response.records.map(r=>r.achievementLevel.rawLabel));cursor=response.pagination.cursor;
+ }
+ assert.deepEqual(seen,['A','B','C','D','E']);
+ const filtered=await s.read({...args,levelLabel:'B'});
+ assert.deepEqual(filtered.levelCoverage.extractedLabels,['B']);assert.equal(filtered.levelCoverage.levelLabelFilterApplied,true);
+ assert.ok(filtered.warnings.some(w=>w.code==='LEVEL_LABEL_FILTER_APPLIED'));
+ const blocked=await s.read({...args,maxChars:500});
+ assert.equal(blocked.records.length,0);assert.equal(blocked.levelCoverage.remainingRecordCount,5);
+ assert.equal(blocked.levelCoverage.allMatchingRecordsDelivered,false);
+ s.result.documentExtractionComplete=false;
+ const partial=await s.read({...args,maxItems:100});
+ assert.equal(partial.levelCoverage.sourceCompleteness,'unverified');
+ assert.ok(partial.warnings.some(w=>w.code==='DOCUMENT_EXTRACTION_INCOMPLETE'));
 });

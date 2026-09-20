@@ -84,6 +84,14 @@ test('code-free descriptive and document-defined labels retain original wording'
   assert.ok(result.warnings.some(w=>w.code==='STANDARD_CODE_NOT_PRESENT'));
   assertEvidence(document,result.records,'hash');
 });
+
+test('A-E labels use alphabetic notation without asserting three levels or converting source labels',()=>{
+  const document=doc(table([['성취기준','A','B','C','D','E'],['[10공수1-01-01] 원문 기준','A 설명','B 설명','C 설명','D 설명','E 설명']]));
+  const records=extractAchievements(document,'hash').records;
+  assert.deepEqual(records.map(r=>r.achievementLevel.rawLabel),['A','B','C','D','E']);
+  assert.ok(records.every(r=>r.achievementLevel.labelSystem==='alphabetic'));
+  assertEvidence(document,records,'hash');
+});
 test('blank code cells do not silently inherit unreported merged spans',()=>{
   const document=doc(table([['성취기준','성취수준','설명'],['[9과01-01] 기준','상','첫 설명'],['','중','둘째 설명']]));
   const records=extractAchievements(document,'hash').records;

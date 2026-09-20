@@ -5,11 +5,12 @@ import { ReferenceCodec, ReferenceError } from "./references.js";
 import { WorkerUnavailableError, type WorkerGateway } from "./gateway.js";
 import { EdunetError } from "../errors.js";
 import { MAX_DOWNLOAD_BYTES } from "../worker/safe-download.js";
+import { matchesAchievementCode, normalizeAchievementCode } from "./code.js";
 
 export interface ReadDependencies {references:ReferenceCodec;gateway:WorkerGateway;config:AchievementConfig;resolveResource:(resource:ResourceIdentity,signal?:AbortSignal)=>Promise<ResourceDetails>}
 const identity = (resource:ResourceIdentity):string=>`${resource.id}|${resource.sourceUrl ?? ""}`;
 const enabled = (format:string,config:AchievementConfig):boolean=>format==="pdf" ? config.pdfReadEnabled : format==="hwp" ? config.hwpReadEnabled : format==="hwpx" && config.hwpxReadEnabled;
-const filtersKey = (input:ReadAchievementInput):string=>createHash("sha256").update(JSON.stringify([input.grade,input.subject,input.achievementStandardCode,input.levelLabel])).digest("hex");
+const filtersKey = (input:ReadAchievementInput):string=>createHash("sha256").update(JSON.stringify([input.grade,input.subject,input.achievementStandardCode ? normalizeAchievementCode(input.achievementStandardCode) : undefined,input.levelLabel])).digest("hex");
 async function cancellable<T>(work:()=>Promise<T>,signal?:AbortSignal):Promise<T> {
   if(signal?.aborted) throw new EdunetError("ABORTED");
   if(!signal) return work();
@@ -25,9 +26,10 @@ async function cancellable<T>(work:()=>Promise<T>,signal?:AbortSignal):Promise<T
   } finally {if(abort) signal.removeEventListener("abort",abort);}
 }
 function matches(record:WorkerResult["records"][number], input:ReadAchievementInput):boolean {
-  for(const name of ["grade","subject","achievementStandardCode"] as const) {
+  for(const name of ["grade","subject"] as const) {
     if(input[name] && record[name]?.raw!==input[name] && record[name]?.normalized!==input[name]) return false;
   }
+  if(input.achievementStandardCode && !matchesAchievementCode(record.achievementStandardCode,input.achievementStandardCode)) return false;
   return !input.levelLabel || record.achievementLevel?.rawLabel===input.levelLabel || record.achievementLevel?.normalizedLabel===input.levelLabel;
 }
 export function createAchievementReader(deps:ReadDependencies) {
@@ -118,13 +120,16 @@ export function createAchievementReader(deps:ReadDependencies) {
     const matching=mode==="resource"?[]:result.records.filter(record=>matches(record,input));
     // The parser also recognizes bare curriculum standards. Those remain source
     // text, but cannot establish an achievement level without its description.
-    const records=matching.filter(record=>record.achievementLevel?.rawLabel.trim() && record.description?.raw.trim());
+    // Accept older Workers while keeping the public label name unambiguous.
+    const records=matching.filter(record=>record.achievementLevel?.rawLabel.trim() && record.description?.raw.trim())
+      .map(record=>record.achievementLevel?.labelSystem==="abc"
+        ? {...record,achievementLevel:{...record.achievementLevel,labelSystem:"alphabetic" as const}} : record);
     if(records.length<matching.length) output.warnings.push({code:"STANDARD_ONLY_RECORDS_OMITTED",message:"수준 라벨과 설명이 함께 없는 성취기준은 검증된 성취수준 레코드에서 제외했습니다. 성취수준이 없으면 원문 블록으로 제공합니다."});
     const hardOversize=records.some(record=>JSON.stringify(record).length>20000);
     if(mode==="resource" && result.status==="verified_extraction") output.status="metadata_only";
-    if(mode==="achievement" && result.status==="verified_extraction" && !records.length) {
+    if(mode==="achievement" && ["verified_extraction","metadata_only"].includes(result.status) && !records.length) {
       output.status="metadata_only";
-      output.warnings.push({code:"NO_MATCHING_RECORDS",message:"요청 조건에 일치하는 검증된 레코드가 없습니다. 원문 블록을 참고하세요."});
+      output.warnings.push({code:"NO_MATCHING_RECORDS",message:"요청 조건에 일치하는 검증된 레코드가 없습니다. 원문 블록에는 다른 코드·과목이 포함될 수 있습니다. 요청 코드와 원문 코드를 확인하고, 다른 코드를 요청 코드의 정정이나 동일 기준으로 대체하지 마세요."});
     }
     let chars=0;
     for(;offset<records.length && output.records.length<input.maxItems;offset++) {
@@ -167,6 +172,18 @@ export function createAchievementReader(deps:ReadDependencies) {
       if(rawCharOffset>=block.text.length) {rawOffset++;rawCharOffset=0;} else break;
     }
     const hasMore=offset<records.length || rawOffset<blocks.length;
+    if(mode==="achievement") {
+      const labels=[...new Set(records.map(record=>record.achievementLevel!.rawLabel))];
+      const boundedLabels=labels.filter(label=>label.length<=100).slice(0,20);
+      const omittedRecordCount=records.filter(record=>JSON.stringify(record).length>20000).length;
+      output.levelCoverage={scope:"attachment_and_filters",extractedLabels:boundedLabels,labelsTruncated:boundedLabels.length<labels.length,
+        matchingRecordCount:records.length,returnedRecordCount:output.records.length,remainingRecordCount:records.length-offset,omittedRecordCount,
+        allMatchingRecordsDelivered:records.length>0 && offset===records.length && omittedRecordCount===0,
+        levelLabelFilterApplied:!!input.levelLabel,sourceCompleteness:"unverified"};
+      if(offset<records.length) output.warnings.push({code:"LEVEL_RECORDS_REMAIN",message:"요청 조건에 맞는 성취수준 레코드가 뒤에 더 있습니다. 같은 첨부·필터와 cursor로 이어 읽고, 현재 응답의 라벨만으로 전체 수준 개수를 단정하지 마세요."});
+      if(input.levelLabel) output.warnings.push({code:"LEVEL_LABEL_FILTER_APPLIED",message:"특정 수준 라벨로 제한된 결과입니다. 전체 수준이 필요하면 levelLabel과 cursor를 빼고 다시 읽으세요."});
+      if(result.documentExtractionComplete!==true) output.warnings.push({code:"DOCUMENT_EXTRACTION_INCOMPLETE",message:"문서 텍스트 추출이 완료되지 않았습니다. 이어 읽기가 끝나도 원문의 모든 수준을 확인한 것으로 볼 수 없습니다."});
+    }
     output.responseTruncated=hasMore;
     output.pagination={hasMore,...(hasMore?{cursor:deps.references.issue("cursor",{resourceId:identity(resource),attachmentId:attachment.id,mode,filters:filtersKey(input),offset,rawOffset,rawCharOffset,contentHash,parserVersion:result.attachment?.parserVersion,profileVersion:result.documentProfile?.profileVersion})}:{})};
     return readAchievementResponseSchema.parse(output);

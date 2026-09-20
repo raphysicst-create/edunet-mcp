@@ -112,6 +112,8 @@ test("records beyond the hard output bound yield an explicit warning and raw evi
   assert.equal(response.warnings.some((warning) => warning.code === "RECORD_EXCEEDS_HARD_LIMIT"), true);
   assert.equal(response.rawBlocks[0].text, "문서의 원문 근거");
   assert.equal(response.pagination.hasMore, false, "the cursor must not stall on an item larger than every legal budget");
+  assert.equal(response.levelCoverage.omittedRecordCount,1);
+  assert.equal(response.levelCoverage.allMatchingRecordsDelivered,false);
 });
 
 test("large raw blocks paginate literal text and absolute character spans without losing content", async () => {

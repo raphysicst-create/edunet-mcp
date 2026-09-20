@@ -16,7 +16,7 @@ function label(block: RawBlock, hash: string, raw = block.text, header?: RawBloc
   return {
     rawLabel: raw,
     normalizedLabel: normalized,
-    labelSystem: /^[A-E]$/.test(normalized) ? "abc" : /^[상중하]$/.test(normalized) ? "상중하" : /^\d+$/.test(normalized) ? "numeric" : knownLevel.test(normalized) ? "descriptive" : "document_defined",
+    labelSystem: /^[A-E]$/.test(normalized) ? "alphabetic" : /^[상중하]$/.test(normalized) ? "상중하" : /^\d+$/.test(normalized) ? "numeric" : knownLevel.test(normalized) ? "descriptive" : "document_defined",
     evidence: uniqueEvidence([evidence(block, hash, raw), ...(header && header !== block ? [evidence(header, hash)] : [])]),
   };
 }
