@@ -1,10 +1,30 @@
 import test from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
-import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {createHash} from 'node:crypto';
+import {join} from 'node:path';
 import {buildIdentity} from '../scripts/build-identity.mjs';
+
+test('build identity tolerates Vercel JSON serialization but detects setting and source changes',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'edunet-identity-'));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ for(const dir of ['src','config','api','scripts'])await mkdir(join(root,dir));
+ for(const path of ['package-lock.json','tsconfig.json','scripts/build-vercel.mjs','scripts/build-identity.mjs'])await writeFile(join(root,path),'{}');
+ await writeFile(join(root,'package.json'),JSON.stringify({version:'test'}));
+ await writeFile(join(root,'src/example.ts'),'original');
+ const config={name:'edunet-mcp',version:2,framework:null,buildCommand:'npm run build:vercel'};
+ await writeFile(join(root,'vercel.json'),JSON.stringify(config,null,2)+'\r\n');
+ const original=await buildIdentity(root);
+ await writeFile(join(root,'vercel.json'),JSON.stringify(Object.fromEntries(Object.entries(config).reverse()))+'\n');
+ assert.equal((await buildIdentity(root)).sourceDigest,original.sourceDigest);
+ await writeFile(join(root,'vercel.json'),JSON.stringify({...config,buildCommand:'different build'}));
+ assert.notEqual((await buildIdentity(root)).sourceDigest,original.sourceDigest);
+ await writeFile(join(root,'vercel.json'),JSON.stringify(config));
+ await writeFile(join(root,'src/example.ts'),'changed');
+ assert.notEqual((await buildIdentity(root)).sourceDigest,original.sourceDigest);
+ assert.deepEqual(original.fileHashEncodings,{'vercel.json':'sorted-json-v1',default:'raw-bytes'});
+});
 
 test('build identity detects same-version source/config/dependency changes and excludes secrets',async t=>{
  const root=await mkdtemp(join(tmpdir(),'edunet-identity-'));t.after(()=>rm(root,{recursive:true,force:true}));

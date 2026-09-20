@@ -11,8 +11,13 @@ const client = new Client({ name: 'edunet-remote-verification', version: expecte
 const expectedIdentity = await buildIdentity(fileURLToPath(new URL('../',import.meta.url)));
 let observedSource, observedManifest;
 const transport = new StreamableHTTPClientTransport(endpoint, {
-  fetch: async (url, options) => {const response=await fetch(url, {
+  fetch: async (url, options) => {
+    assert.equal(new URL(url).origin,endpoint.origin,'Unexpected verification origin');
+    const headers=new Headers(options?.headers);
+    if(process.env.VERCEL_AUTOMATION_BYPASS_SECRET)headers.set('x-vercel-protection-bypass',process.env.VERCEL_AUTOMATION_BYPASS_SECRET);
+    const response=await fetch(url, {
     ...options,
+    headers,redirect:'error',
     signal: AbortSignal.any([...(options?.signal ? [options.signal] : []), AbortSignal.timeout(55_000)]),
   });
     observedSource=response.headers.get('x-edunet-source-digest');observedManifest=response.headers.get('x-edunet-manifest-digest');
