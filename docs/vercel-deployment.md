@@ -2,6 +2,8 @@
 
 ## RC 배포 식별과 검증
 
+2026-09-20 최신 후보는 [RC4 검증 기록](achievement-rc4-validation-2026-09-20.md), 배포 동일성의 최초 진단은 [RC2 검증 기록](achievement-rc2-validation-2026-09-20.md)에 정리합니다. `vercel.json`은 플랫폼 재직렬화에 대비하여 모든 설정을 키 정렬 JSON으로 해시하며, 나머지 파일은 원본 바이트를 해시합니다. manifest의 `fileHashEncodings`가 이 차이를 명시합니다.
+
 빌드는 제품 소스·설정·패키지/lockfile·빌드 스크립트의 파일별 SHA256을 manifest에 넣습니다. `sourceDigest`는 파일 해시 목록의 SHA256, `manifestDigest`는 해당 필드를 제외한 manifest 본문의 SHA256입니다. `sourceCommit`은 확인한 값만 사용하며 미확인 시 `null`입니다. `gitClean`은 manifest에 포함된 제품 입력 경로에 대한 상태이며 Git이 없는 빌드는 `null`입니다.
 
 함수 내부 `dist/build-manifest.json`과 공개 `/build-manifest.json`에 같은 manifest를 넣습니다. MCP 응답에는 `X-Edunet-Source-Digest`, `X-Edunet-Manifest-Digest`, 확인된 경우 `X-Edunet-Source-Commit` 헤더를 제공합니다. `verify:remote`는 실제 원격 소스 digest를 로컬 입력과 비교하여 같은 버전의 다른 소스 배포를 거절합니다.
@@ -53,7 +55,7 @@ Vercel 프로젝트의 Production 환경에 다음 값을 설정합니다. 로�
 npm run verify:remote -- https://edunet-mcp.vercel.app/api/mcp --read
 ```
 
-패키지와 원격 서버 버전 일치, 도구 3개, 실제 `광합성` 검색, 과학 성취수준 후보 탐색, 첨부 목록, 선택한 PDF/HWP 한 개의 텍스트 읽기를 확인합니다. `metadata_only`는 파일 텍스트를 읽었으나 성취수준 레코드를 확정하지 못했다는 의미입니다. 후보 검색의 `partial` 경고와 원문 읽기의 경고는 그대로 기록하며 도메인 정확도 검증을 대신하지 않습니다.
+소스 digest·패키지 버전 일치, 도구 3개, 실제 `광합성` 검색, 과학 성취수준 후보 탐색, 첨부 목록 및 지정된 과학 PDF의 `[9과05-01]` A–E를 확인합니다. 목표 자료를 다른 성공 첨부로 바꾸지 않습니다. `metadata_only`는 파일 텍스트를 읽었으나 성취수준 레코드를 확정하지 못했다는 의미입니다. 후보 검색의 `partial` 경고와 원문 읽기의 경고는 그대로 기록하며 도메인 정확도 검증을 대신하지 않습니다.
 
 ## 운영 배포 검증 기록 — 2026-09-18 KST
 
