@@ -8,6 +8,8 @@ import {
   type ResourceDetails, type ResourceIdentity, type SearchAchievementInput, type Warning,
 } from "./contracts.js";
 import { detailRegistryPath, inspectSourceRegistry, loadSourceRegistry, registryCollection, type AchievementSourceRegistryEntry } from "./source-registry.js";
+import { BOARD_LIST_PATH, listOfficialAchievements, metadataRelevance, type BoardPage } from "./official-listing.js";
+import { MAX_DOWNLOAD_BYTES } from "../worker/safe-download.js";
 
 export interface AchievementSearchDependencies {
   references: {issue(kind: "resource" | "achievement", data: Record<string, unknown>): string};
@@ -16,6 +18,7 @@ export interface AchievementSearchDependencies {
   registry?: readonly AchievementSourceRegistryEntry[];
   now?: () => number;
   timeoutMs?: number;
+  listOfficial?: (input: SearchAchievementInput, signal?: AbortSignal) => Promise<BoardPage>;
 }
 
 const achievementTerms = /성취\s*(?:수준|기준)|평가\s*기준/g;
@@ -128,7 +131,7 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
     const warnings: Warning[] = [...registry.warnings];
     const coverage: AchievementSearchResponse["coverage"] = {
       officialApiQueried: false, queryVariantsTried: [], attachmentMetadataChecked: false, registryPathsChecked: [],
-      limitation: "공식 검색 API와 검증된 상세·컬렉션 경로만 조회했습니다. 후보는 원문 검증 결과가 아니며 검색 누락 가능성이 있습니다. 페이지는 각 공식 질의의 같은 페이지를 합친 범위입니다.",
+      limitation: "공식 검색 API 및 활성화된 공식 게시판·상세 경로를 조회합니다. 후보는 원문 검증 결과가 아니며 검색 누락 가능성이 있습니다. 페이지는 출처별 질의의 같은 페이지를 합친 범위이며 전역 커서가 아닙니다.",
     };
     const budget = new AbortController();
     const milliseconds = Math.max(1, Math.min(deps.timeoutMs ?? 10000, 10000));
@@ -156,7 +159,24 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
         if (!coverage.queryVariantsTried.includes(plan.query)) coverage.queryVariantsTried.push(plan.query);
         if (plan.registryPath && !coverage.registryPathsChecked.includes(plan.registryPath)) coverage.registryPathsChecked.push(plan.registryPath);
       };
-      await Promise.all(plans.map(async plan => {
+      const listingWork = async (): Promise<void> => {
+        if (!registry.entries.some(entry => entry.pathPattern === BOARD_LIST_PATH) || searchSignal.aborted) return;
+        coverage.registryPathsChecked.push(BOARD_LIST_PATH);
+        coverage.officialListing = {attempted: true, status: "unavailable", page: input.page};
+        try {
+          const page = await abortable((deps.listOfficial ?? listOfficialAchievements)(input, searchSignal), searchSignal);
+          successes++;
+          coverage.officialListing = {attempted: true, status: "ok", page: input.page, keyword: page.keyword,
+            ...(page.school ? {school: page.school} : {}), hasNext: page.hasNext};
+          upstreamHasNext ||= page.hasNext;
+          for (const resource of page.resources) resources.set(identity(resource), {resource, achievementQuery: false, registry: BOARD_LIST_PATH});
+        } catch {
+          checkCancellation();
+          failed = true;
+          warnings.push({code: "official_listing_unavailable", message: "공식 성취수준 게시판 조회를 완료하지 못했습니다. 성공한 검색 범위만 반환합니다."});
+        }
+      };
+      await Promise.all([listingWork(), ...plans.map(async plan => {
         if (searchSignal.aborted) return;
         try {
           const result = await abortable(search({query: plan.query, categories: plan.categories, sort: "relevance", searchType: "title_summary", page: input.page, pageSize: input.pageSize}, searchSignal), searchSignal);
@@ -180,10 +200,10 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
           failed = true;
           warnings.push({code: configurationMissing ? "search_configuration_unavailable" : searchSignal.aborted ? "discovery_search_timeout" : "official_search_unavailable", message: "일부 공식 검색 질의를 완료하지 못했습니다. 성공한 조회 범위만 반환합니다."});
         }
-      }));
+      })]);
       checkCancellation();
       clearTimeout(searchTimer);
-      const priority = (candidate: {resource: ResourceIdentity; achievementQuery: boolean}): number => score(candidate.resource).score + (candidate.achievementQuery ? 2 : 0);
+      const priority = (candidate: {resource: ResourceIdentity; achievementQuery: boolean}): number => score(candidate.resource).score + metadataRelevance(candidate.resource, input) + (candidate.achievementQuery ? 2 : 0);
       const ranked = [...resources.values()].sort((a, b) => priority(b) - priority(a) || a.resource.id.localeCompare(b.resource.id));
       const inspected = ranked.slice(0, 20);
       const resolved = new Map<string, ResourceDetails>();
@@ -218,13 +238,14 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
         const details = resolved.get(identity(current.resource));
         const resource = details?.resource ?? current.resource;
         const rankedCandidate = score(resource, details);
+        rankedCandidate.score += metadataRelevance(resource, input);
         if (rankedCandidate.score < 2 && !current.achievementQuery) continue;
         const reason = rankedCandidate.reasons;
         if (current.achievementQuery) reason.push("성취 관련 질의의 공식 검색 결과에 포함되었습니다.");
-        if (current.registry) reason.push(`검증된 컬렉션 경로 ${current.registry}에서 발견했습니다.`);
+        if (current.registry) reason.push(`검증된 ${current.registry === BOARD_LIST_PATH ? "공식 게시판" : "컬렉션"} 경로 ${current.registry}에서 발견했습니다.`);
         reason.push("candidate_unverified: 원문 성취수준 레코드는 읽기 도구에서 확인해야 합니다.");
         const checked = details !== undefined && metadataChecked(details);
-        const possible = details?.attachments.some(file => file.format === "pdf" || file.format === "hwp");
+        const possible = details?.attachments.some(file => (file.format === "pdf" || file.format === "hwp") && (file.byteSize === undefined || file.byteSize <= MAX_DOWNLOAD_BYTES));
         const readCapability = !checked ? "unknown" : possible ? "possible" : details.attachments.length ? "unsupported" : "unknown";
         const hasHint = (hint: string | undefined): hint is string => !!hint && rankedCandidate.text.includes(hint);
         const codeHint = codePattern.exec(rankedCandidate.text)?.[0];

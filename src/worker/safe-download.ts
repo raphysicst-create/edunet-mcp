@@ -34,6 +34,8 @@ interface RequestContext {
   maxBytes: number;
   maxDecodedBytes: number;
   retries: { remaining: number };
+  /** Set only by the fixed public-board listing adapter below. */
+  postBody?: string;
 }
 
 type Purpose = "metadata" | "document";
@@ -87,9 +89,13 @@ export function validateDownloadUrl(value: string | URL, purpose: Purpose = "doc
     || path.split("/").some((part) => part === "." || part === "..")) throw new DownloadError("DOWNLOAD_BLOCKED");
   const allowed = purpose === "metadata"
     ? url.hostname === "api.edunet.net" && (/^\/main\/(?:clssStdDt\/getClssStdDtInfo|fileRsc\/downloadFile)\/\d{1,20}$/.test(path)
-      || path === "/main/conts/getContsData")
+      || path === "/main/conts/getContsData"
+      || path === "/main/cmnBoard/getCmnBoardPstList"
+      || /^\/main\/cmnBoard\/getCmnBoardPstInfo\/57\/\d{1,20}$/.test(path))
     : ["educon.edunet.net", "educdn.edunet.net", "edunet-data.kr.object.gov-ncloudstorage.com", "edunet-vod.kr.object.gov-ncloudstorage.com"].includes(url.hostname)
-      && /^\/(?:CNEDU\/MANUAL\/clssStdDt|KEDNCM\/2022NEWEDU)\/(?:[^/]+\/)*[^/]+\.(?:pdf|hwp|hwpx)$/i.test(path);
+      && (/^\/(?:CNEDU\/MANUAL\/clssStdDt|KEDNCM\/2022NEWEDU)\/(?:[^/]+\/)*[^/]+\.(?:pdf|hwp|hwpx)$/i.test(path)
+        || /^\/KEDNCM\/NCIC\/tchboard\/\d{1,20}\/[a-z0-9-]+\.(?:pdf|hwp|hwpx)$/i.test(path)
+        || /^\/CNEDU\/BBS\/19_\d{1,20}_\d{8}\/[a-z0-9-]+\.(?:pdf|hwp|hwpx)$/i.test(path));
   if (!allowed) throw new DownloadError("DOWNLOAD_BLOCKED");
   return url;
 }
@@ -141,10 +147,11 @@ async function pinnedRequest(url: URL, context: RequestContext): Promise<Incomin
   return new Promise((resolve, reject) => {
     const send = context.options.dependencies?.request ?? request;
     const requestOptions: RequestOptions & { autoSelectFamily: boolean } = {
-      method: "GET", agent: false, autoSelectFamily: false,
+      method: context.postBody === undefined ? "GET" : "POST", agent: false, autoSelectFamily: false,
       servername: url.hostname, rejectUnauthorized: true, signal: context.signal,
       maxHeaderSize: 16 * 1024,
-      headers: { "accept-encoding": "identity", "user-agent": "edunet-mcp/1.0" },
+      headers: { "accept-encoding": "identity", "user-agent": "edunet-mcp/1.0",
+        ...(context.postBody === undefined ? {} : {"content-type": "application/json", "content-length": Buffer.byteLength(context.postBody)}) },
       // No second DNS resolution between validation and the socket connection.
       lookup: (_hostname, options, callback) => {
         if (options.all) callback(null, [pinned]);
@@ -167,7 +174,7 @@ async function pinnedRequest(url: URL, context: RequestContext): Promise<Incomin
       });
     });
     req.once("error", reject);
-    req.end();
+    req.end(context.postBody);
   });
 }
 
@@ -214,7 +221,7 @@ async function retrieve(value: string | URL, purpose: Purpose, context: RequestC
         if ([301, 302, 303, 307, 308].includes(status)) {
           const location = response.headers.location;
           response.destroy();
-          if (!location || /[\\\x00-\x20]/.test(location) || redirect >= MAX_REDIRECTS) throw new DownloadError("DOWNLOAD_BLOCKED");
+          if (context.postBody !== undefined || !location || /[\\\x00-\x20]/.test(location) || redirect >= MAX_REDIRECTS) throw new DownloadError("DOWNLOAD_BLOCKED");
           // Revalidate host, path, DNS and actual connection for EVERY redirect.
           let next: URL;
           try { next = new URL(location, url); } catch { throw new DownloadError("DOWNLOAD_BLOCKED"); }
@@ -249,6 +256,20 @@ async function metadata(value: string | URL, context: RequestContext): Promise<u
 
 export async function safeMetadataJson(url: string | URL, options: DownloadOptions = {}): Promise<unknown> {
   return withinBudget(options, (context) => metadata(url, context));
+}
+
+/** No arbitrary URL, headers, method or request body can enter this POST path. */
+export async function safeBoardListing(input: {page: number; pageSize: number; keyword: string; school?: string}, options: DownloadOptions = {}): Promise<unknown> {
+  if (!Number.isSafeInteger(input.page) || input.page < 1 || input.page > 50
+    || !Number.isSafeInteger(input.pageSize) || input.pageSize < 1 || input.pageSize > 20
+    || typeof input.keyword !== "string" || input.keyword.length > 100 || /[\x00-\x1f]/.test(input.keyword)
+    || (input.school !== undefined && !["3", "4", "5", "58"].includes(input.school))) throw new DownloadError("DOWNLOAD_BLOCKED");
+  const postBody = JSON.stringify({
+    pagingProperty: {currentPage: input.page, maxResults: input.pageSize, maxLinks: 10, startPage: 1, endPage: 1, countItem: 0, loading: false},
+    searchDTO: {bbsIdList: [19], bbsId: 19, searchCondition: "ttl", searchKeyword: input.keyword,
+      searchFieldStngVl: input.school ? {schoolGradeSe: input.school} : {}, listType: "normal"}, pagingYn: "Y",
+  });
+  return withinBudget(options, context => metadata("https://api.edunet.net/main/cmnBoard/getCmnBoardPstList", {...context, postBody}));
 }
 
 /** Only trusted signed attachment metadata may reach this internal Worker API. */

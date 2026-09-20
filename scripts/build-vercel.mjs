@@ -2,6 +2,7 @@ import { copyFile, lstat, mkdir, readdir, readFile, realpath, rm, stat, writeFil
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { nodeFileTrace } from '@vercel/nft';
+import { buildIdentity } from './build-identity.mjs';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const normalize = value => value.replaceAll('\\', '/');
@@ -31,7 +32,7 @@ function allowedFile(path) {
   if (privateFiles.test(path) || disabledDependencies.test(path)) return false;
   if (path.endsWith('.map') || /\.d\.(?:ts|mts|cts)$/.test(path)) return false;
   return path === 'api/mcp.mjs' || path === 'package.json' || dataFiles.includes(path) ||
-    /^dist\/.*\.js$/.test(path) || path.startsWith('node_modules/');
+    path === 'dist/build-manifest.json' || /^dist\/.*\.js$/.test(path) || path.startsWith('node_modules/');
 }
 
 /** Preserve Node's directory structure: the document worker forks a separate JS entry. */
@@ -47,6 +48,8 @@ export async function buildVercel({ root = projectRoot, outputName = 'output' } 
 
   const entries = ['api/mcp.mjs', 'dist/worker/entry.js'];
   for (const path of [...entries, ...dataFiles, 'package.json', 'public/index.html']) await stat(join(root, path));
+  const identity = await buildIdentity(root);
+  await writeFile(join(root, 'dist/build-manifest.json'), JSON.stringify(identity) + '\n');
   const trace = await nodeFileTrace(entries.map(path => join(root, path)), {
     base: root,
     processCwd: root,
@@ -96,6 +99,7 @@ export async function buildVercel({ root = projectRoot, outputName = 'output' } 
     await mkdir(dirname(target), { recursive: true });
     await copyFile(join(root, path), target);
   }
+  await writeFile(join(functionDirectory, 'dist/build-manifest.json'), JSON.stringify(identity) + '\n');
   await writeFile(join(functionDirectory, '.vc-config.json'), JSON.stringify({
     runtime: 'nodejs24.x',
     handler: 'api/mcp.mjs',
@@ -105,6 +109,7 @@ export async function buildVercel({ root = projectRoot, outputName = 'output' } 
     maxDuration: 60,
   }, null, 2) + '\n');
   await mkdir(join(output, 'static'), { recursive: true });
+  await writeFile(join(output, 'static/build-manifest.json'), JSON.stringify(identity) + '\n');
   await copyFile(join(root, 'public/index.html'), join(output, 'static/index.html'));
   await writeFile(join(output, 'config.json'), JSON.stringify({
     version: 3,

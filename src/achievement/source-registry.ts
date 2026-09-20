@@ -11,6 +11,8 @@ export interface AchievementSourceRegistryEntry {
 }
 
 const knownPaths = new Map<string, AchievementSourceRegistryEntry["discoveryMethod"]>([
+  ["/main/cmnBoard/getCmnBoardPstList", "official_listing"],
+  ["/main/cmnBoard/getCmnBoardPstInfo/57/{id}", "known_detail"],
   ["/search/searchApi/search?collection=evl_data", "api"],
   ["/search/searchApi/search?collection=crclm", "api"],
   ["/main/clssStdDt/getClssStdDtInfo/{id}", "known_detail"],
@@ -62,6 +64,7 @@ export function detailRegistryPath(sourceUrl: string | undefined): string | unde
     if (url.protocol !== "https:" || !["www.edunet.net", "edunet.net"].includes(url.hostname) || url.port || url.username || url.password) return undefined;
     if (/^\/clssStdDt\/view\/\d+\/\d+\/?$/.test(url.pathname)) return "/main/clssStdDt/getClssStdDtInfo/{id}";
     if (/^\/contsMvGllry\/view\/\d+\/\d+\/?$/.test(url.pathname)) return "/main/conts/getContsData?contsId={id}&prgrmId=0";
+    if (/^\/cmnBoard\/view\/57\/\d{1,20}\/?$/.test(url.pathname)) return "/main/cmnBoard/getCmnBoardPstInfo/57/{id}";
   } catch { /* Unsupported provenance is preserved without being fetched. */ }
   return undefined;
 }

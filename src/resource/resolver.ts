@@ -21,6 +21,7 @@ export function resourceDetailUrl(resource: ResourceIdentity): URL | undefined {
   const source = new URL(resource.sourceUrl);
   const pathId = source.pathname.replace(/\/$/, "").split("/").at(-1);
   if (pathId !== resource.id) return undefined;
+  if (path === "/main/cmnBoard/getCmnBoardPstInfo/57/{id}") return new URL(`https://api.edunet.net/main/cmnBoard/getCmnBoardPstInfo/57/${resource.id}`);
   if (path.startsWith("/main/clssStdDt/")) {
     const url = new URL(`https://api.edunet.net/main/clssStdDt/getClssStdDtInfo/${resource.id}`);
     for (const name of ["sbjtClsf", "srvcClsf"]) {
@@ -34,11 +35,11 @@ export function resourceDetailUrl(resource: ResourceIdentity): URL | undefined {
   return url;
 }
 
-function attachmentFrom(raw: unknown, resourceId: string, warnings: Warning[]): ResolvedAttachment | undefined {
+function attachmentFrom(raw: unknown, resourceId: string, warnings: Warning[], board = false): ResolvedAttachment | undefined {
   const file = object(raw);
   if (file.useYn === "N" || file.expsrYn === "N") return undefined;
-  const owner = clean(file.contsId);
-  if (owner && owner !== resourceId) {
+  const owner = clean(board ? file.pstId : file.contsId);
+  if ((board && owner !== resourceId) || (owner && owner !== resourceId)) {
     warnings.push({code: "attachment_scope_mismatch", message: "자료 ID가 다른 첨부 메타데이터를 제외했습니다."});
     return undefined;
   }
@@ -91,19 +92,23 @@ export async function resolveResource(resource: ResourceIdentity, signal?: Abort
     const envelope = object(payload);
     if (envelope.success !== true) throw new Error("metadata response rejected");
     const data = object(envelope.data);
-    const info = object(data.clssStdDtInfo ?? data.result ?? data.contsInfo);
-    if (clean(info.contsId) !== resource.id) throw new Error("metadata resource mismatch");
-    const title = clean(info.contsNm ?? info.shrtNm);
+    const board = url.pathname.startsWith("/main/cmnBoard/");
+    const info = object(board ? data.pstInfo : data.clssStdDtInfo ?? data.result ?? data.contsInfo);
+    if (clean(board ? info.pstId : info.contsId) !== resource.id) throw new Error("metadata resource mismatch");
+    if (board && (clean(info.bbsId) !== "19" || clean(object(data.bbsInfo).bbsId) !== "19"
+      || object(data.bbsInfo).useYn !== "Y" || info.delYn !== "N"
+      || info.secrYn === "Y" || info.shtotYn === "Y" || info.tmprStrgYn === "Y")) throw new Error("board scope or visibility");
+    const title = clean(board ? info.ttl : info.contsNm ?? info.shrtNm);
     if (!title) throw new Error("metadata title absent");
     if (info.useYn === "N") throw new Error("resource unpublished");
     const warnings: Warning[] = [...registry.warnings];
-    const rawFiles = data.fileList ?? info.fileList;
+    const rawFiles = board ? data.atchFileInfoList : data.fileList ?? info.fileList;
     if (!Array.isArray(rawFiles)) throw new Error("metadata file list absent");
-    const attachments = rawFiles.slice(0, 100).map(file => attachmentFrom(file, resource.id, warnings)).filter((file): file is ResolvedAttachment => !!file);
+    const attachments = rawFiles.slice(0, 100).map(file => attachmentFrom(file, resource.id, warnings, board)).filter((file): file is ResolvedAttachment => !!file);
     if (rawFiles.length > 100) warnings.push({code: "attachment_list_truncated", message: "첨부 목록을 처음 100개로 제한했습니다."});
     const unique = attachments.filter((item, index) => attachments.findIndex(other => other.id === item.id) === index);
     if (!unique.length) warnings.push({code: "candidate_found_no_attachment", message: "자료는 확인했지만 읽을 수 있는 첨부 메타데이터가 없습니다."});
-    const metadata = clean([info.contsCn, info.kywd, info.displayName].map(value => clean(value)).filter(Boolean).join(" "), 2000);
+    const metadata = clean([board ? info.cn : info.contsCn, info.kywd, info.displayName].map(value => clean(value)).filter(Boolean).join(" "), 2000);
     const snippet = [resource.snippet, metadata].filter((value, index, values) => !!value && values.indexOf(value) === index).join(" ").slice(0, 4000);
     return {resource: {...resource, title, ...(snippet ? {snippet} : {})}, attachments: unique, warnings};
   } catch {

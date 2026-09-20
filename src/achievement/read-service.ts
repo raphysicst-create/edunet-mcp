@@ -4,6 +4,7 @@ import { readAchievementInputSchema, readAchievementResponseSchema, resourceIden
 import { ReferenceCodec, ReferenceError } from "./references.js";
 import { WorkerUnavailableError, type WorkerGateway } from "./gateway.js";
 import { EdunetError } from "../errors.js";
+import { MAX_DOWNLOAD_BYTES } from "../worker/safe-download.js";
 
 export interface ReadDependencies {references:ReferenceCodec;gateway:WorkerGateway;config:AchievementConfig;resolveResource:(resource:ResourceIdentity,signal?:AbortSignal)=>Promise<ResourceDetails>}
 const identity = (resource:ResourceIdentity):string=>`${resource.id}|${resource.sourceUrl ?? ""}`;
@@ -61,6 +62,10 @@ export function createAchievementReader(deps:ReadDependencies) {
     let listChars=0;
     for(const item of details.attachments.slice(listOffset,listOffset+Math.min(input.maxItems,20))) {
       const candidate={attachmentRef:deps.references.issue("attachment",{resourceId:identity(resource),attachmentId:item.id}),fileName:item.fileName,format:item.format,...(item.byteSize!==undefined?{byteSize:item.byteSize}:{}),readCapability:enabled(item.format,deps.config)?"possible" as const:"unsupported" as const,selectionReason:enabled(item.format,deps.config)?"지원 형식 후보입니다. 실제 바이트 검증과 파싱은 아직 하지 않았습니다.":"지원하지 않거나 기능 플래그가 꺼진 형식입니다."};
+      if(item.byteSize!==undefined && item.byteSize>MAX_DOWNLOAD_BYTES) {
+        candidate.readCapability="unsupported";
+        candidate.selectionReason="DOWNLOAD_TOO_LARGE: 첨부 메타데이터의 크기가 10MiB 다운로드 제한을 초과합니다. 원문 링크에서 확인하세요.";
+      }
       const cost=JSON.stringify(candidate).length;
       if(base.attachments.length && listChars+cost>12000) break;
       base.attachments.push(candidate);listChars+=cost;
@@ -84,6 +89,7 @@ export function createAchievementReader(deps:ReadDependencies) {
     base.attachment={attachmentRef:attachmentRef!,fileName:attachment.fileName,format:attachment.format,...(attachment.declaredMimeType?{declaredMimeType:attachment.declaredMimeType}:{}),downloadStatus:"blocked"};
     delete base.attachments;delete base.pagination;
     if(!enabled(attachment.format,deps.config)) return {...base,status:"unsupported_format",warnings:[...base.warnings,{code:"FORMAT_DISABLED",message:"이 형식은 검증·기능 플래그 정책에 따라 읽기가 비활성화되었습니다."}]};
+    if(attachment.byteSize!==undefined && attachment.byteSize>MAX_DOWNLOAD_BYTES) return {...base,status:"source_unavailable",warnings:[...base.warnings,{code:"DOWNLOAD_TOO_LARGE",message:"첨부 크기가 10MiB 다운로드 제한을 초과합니다. 원문 링크에서 확인하세요."}]};
     let offset=0,rawOffset=0,rawCharOffset=0,prior:Record<string,unknown>|undefined;
     if(input.cursor) {
       prior=requestedCursor!;

@@ -1,6 +1,6 @@
 {
   "name": "edunet-mcp",
-  "version": "1.1.0-beta.1",
+  "version": "1.1.0-rc.1",
   "private": true,
   "description": "에듀넷 교육자료 검색 로컬 MCP 서버",
   "type": "module",
@@ -30,6 +30,7 @@
     "cfb": "1.2.2",
     "fast-xml-parser": "5.11.1",
     "kordoc": "4.14.0",
+    "pdfjs-dist": "4.10.38",
     "zod": "4.6.5"
   },
   "devDependencies": {

@@ -9,8 +9,9 @@ import { createWorkerGateway, type WorkerGateway } from "./gateway.js";
 import { createAchievementReader } from "./read-service.js";
 import { ReferenceCodec, ReferenceError } from "./references.js";
 import { createAchievementSearch } from "./search-orchestrator.js";
+import type { AchievementSourceRegistryEntry } from "./source-registry.js";
 
-export interface AchievementOptions {config?:AchievementConfig;references?:ReferenceCodec;gateway?:WorkerGateway;resolveResource?:typeof resolveResource}
+export interface AchievementOptions {config?:AchievementConfig;references?:ReferenceCodec;gateway?:WorkerGateway;resolveResource?:typeof resolveResource;registry?:readonly AchievementSourceRegistryEntry[]}
 const annotations={readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:true} as const;
 /** Register lightweight gateways only. Parser packages are never imported here. */
 export function registerAchievementTools(server:McpServer,search=searchEdunet,options:AchievementOptions={}) {
@@ -22,7 +23,9 @@ export function registerAchievementTools(server:McpServer,search=searchEdunet,op
   function createServices() {
     const references=options.references ?? new ReferenceCodec(config.referenceSecret ?? "");
     const gateway=options.gateway ?? createWorkerGateway({secret:config.referenceSecret ?? ""});
-    return {references,search:createAchievementSearch({search,resolveResource:options.resolveResource ?? resolveResource,references}),read:createAchievementReader({references,gateway,config,resolveResource:options.resolveResource ?? resolveResource})};
+    const registryOptions=options.registry===undefined?{}:{registry:options.registry};
+    const resolver=options.resolveResource ?? ((resource,signal)=>resolveResource(resource,signal,registryOptions));
+    return {references,search:createAchievementSearch({search,resolveResource:resolver,references,...registryOptions}),read:createAchievementReader({references,gateway,config,resolveResource:resolver})};
   }
   function getServices() {return services ??=createServices();}
   async function respond(tool:string,work:()=>Promise<unknown>) {

@@ -9,7 +9,7 @@ import { codePattern, headers, knownLevel, documentProfile } from "./profile.js"
 type Context = Partial<Pick<AchievementRecord, "grade" | "subject" | "domain">>;
 type RecordFields = Omit<AchievementRecord, "id" | "evidence" | "extraction">;
 const gradePattern = /(?:(?:초등학교|중학교|고등학교)\s*)?\d\s*(?:[~∼～·ㆍ,-]\s*\d\s*)?학년(?:군)?|초등학교|중학교|고등학교/u;
-const subjectPattern = /(?<![가-힣A-Za-z0-9])((?:통합|공통)?과학|국어|수학|영어|사회|도덕|역사|체육|음악|미술|실과|기술[·ㆍ]가정|정보|물리학|화학|생명과학|지구과학)(?=$|[\s·/()])/u;
+const subjectPattern = /(?<![가-힣A-Za-z0-9])((?:통합|공통)?과학|국어|수학|영어|사회|도덕|역사|체육|음악|미술|실과|기술[·ㆍ]가정|정보|물리학|화학|생명과학|지구과학)(?=$|[\s,·/()])/u;
 
 function label(block: RawBlock, hash: string, raw = block.text, header?: RawBlock): AchievementLevelValue {
   const normalized = raw.trim().replace(/\s+/g, " ");
@@ -36,6 +36,14 @@ function updateContext(block: RawBlock, previous: Context, hash: string, warning
   // Context is accepted only from headings or explicit metadata lines, never arbitrary descriptions.
   const explicit = /^(?:학년(?:군)?|과목|교과|영역)\s*[:：]/u.test(block.text.trim());
   if (block.kind !== "heading" && !explicit) return previous;
+  // PDF font heuristics can mark entire prose paragraphs as headings. A mention
+  // of another subject in prose is not a change of the document's subject.
+  if (!explicit) {
+    const remainder = block.text.replace(new RegExp(gradePattern.source, "gu"), "")
+      .replace(new RegExp(subjectPattern.source, "gu"), "")
+      .replace(/\d{4}|개정|교육과정|에\s*따른|성취기준별|성취수준|성취기준|평가기준|교과|과목|[\s,·ㆍ/()[\]:：-]/gu, "");
+    if (remainder) return previous;
+  }
   const next = { ...previous };
   const grades = [...block.text.matchAll(new RegExp(gradePattern.source, "gu"))];
   const grade = grades[0];
@@ -75,6 +83,11 @@ function detectHeader(cells: Map<number, RawBlock>): Header | undefined {
   for (const [column, cell] of cells) {
     const value = cell.text.trim().replace(/\s+/g, " ");
     for (const [key, pattern] of Object.entries(headers)) if (pattern.test(value)) columns.set(key, column);
+    // The official NCIC header spans the label and description columns.
+    // Accept only the parser's explicit two-column span, not a guessed layout.
+    if (/^성취기준별\s*성취수준$/.test(value) && cell.columnSpan === 2 && cell.location.column === column) {
+      columns.set("level", column); columns.set("description", column + 1);
+    }
     if (knownLevel.test(value)) levels.set(column, cell);
   }
   if ((columns.has("level") && columns.has("description")) || (levels.size >= 2 && (columns.has("standard") || columns.has("code"))) || columns.has("standard")) return { columns, levels, cells };
@@ -84,8 +97,19 @@ function detectHeader(cells: Map<number, RawBlock>): Header | undefined {
 function extractTable(blocks: RawBlock[], context: Context, hash: string): { records: AchievementRecord[]; orientations: Set<DocumentProfile["tableOrientation"]>; matched: boolean } {
   const records: AchievementRecord[] = [];
   const orientations = new Set<DocumentProfile["tableOrientation"]>();
+  const rows = tableRows(blocks);
+  if (blocks.some(b => /^성취기준별\s*성취수준$/.test(b.text.trim()) && b.columnSpan === 2)) {
+    // A combined NCIC header alone cannot establish which standard owns a
+    // level. Reject fragmented/unreported merges instead of emitting a code
+    // for only the row on which its vertically centered text happened to land.
+    for (const [row, cells] of rows) {
+      if (row === 1) continue;
+      const standardCell = cells.get(1);
+      if (!standardCell || !codePattern.test(standardCell.text)) return {records, orientations, matched: false};
+    }
+  }
   let header: Header | undefined;
-  for (const [row, cells] of tableRows(blocks)) {
+  for (const [row, cells] of rows) {
     const candidate = detectHeader(cells);
     if (candidate) { header = candidate; continue; } // Includes repeated page headers.
     if (!header) continue;

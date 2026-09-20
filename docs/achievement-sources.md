@@ -1,5 +1,21 @@
 # 성취수준 발견 경로와 지원 범위
 
+## 2026-09-20 RC 변경
+
+`1.1.0-rc.1`은 공식 성취수준 게시판을 추가합니다. 화면 메뉴 `57`은 API 게시판 `19`에 대응합니다. 공개 사이트 `CmnBoardTemplate.js`, `CmnBoardView.js`와 실제 응답에서 확인했습니다.
+
+| 경로 | 계약 |
+|---|---|
+| 목록 | `POST https://api.edunet.net/main/cmnBoard/getCmnBoardPstList`; 고정 `bbsId=19`, 제목 검색, 학교급 필터, 최대 20개/페이지 |
+| 상세 | `GET https://api.edunet.net/main/cmnBoard/getCmnBoardPstInfo/57/{pstId}`; 게시판·게시물·공개 상태 검증 |
+| 첨부 | `atchFileInfoList`의 `pstId` 일치 확인 후 `fileRscId`로 기존 다운로드 API 주소 생성 |
+
+학교급 값은 공식 설정 응답의 초등 `3`, 중등 `4`, 중·고등 `5`, 고등 `58`을 사용합니다. 코드에서 얻은 단서는 검색용이며 특정 학년이나 원문 코드 존재를 증명하지 않습니다. 일반 검색이 실패하거나 0건이어도 게시판을 조회합니다. `coverage.officialListing`은 목록 조건·페이지·성공 여부를 기록하고 일부 경로 실패는 `partial`로 표시합니다. 기존 `officialApiQueried`는 검색 API 호출 여부입니다.
+
+신규 다운로드 허용 범위는 기존 공식 호스트의 `/KEDNCM/NCIC/tchboard/{숫자}/{영숫자·하이픈 파일명}`과 `/CNEDU/BBS/19_{게시물ID}_{8자리날짜}/{영숫자·하이픈 파일명}` 및 PDF/HWP/HWPX 확장자입니다. 실제 공식 첨부의 다운로드 응답에서 두 경로군을 확인했습니다. 10MiB 제한과 DNS·연결 주소·리디렉션·MIME 검증은 유지합니다. 알려진 초과 크기는 목록에서 `unsupported` 및 `DOWNLOAD_TOO_LARGE` 사유로 안내합니다.
+
+아래는 기존 검색 경로와 과거 읽기 검증 기록입니다. 게시판 추가가 실제 문서 전체의 발견률·추출 정확도 통과를 뜻하지는 않습니다.
+
 `search_edunet_achievement`는 기존 `search_edunet`을 변경하지 않고 공식 검색 API를 조합합니다. 원래 질의와 성취수준·성취기준·평가기준 변형을 최대 5개 사용하며, 검증된 평가자료(`evl_data`)·교육과정(`crclm`) 컬렉션도 최대 2회 조회합니다. 전체 발견 예산은 10초이고, 상세 메타데이터 조회는 중복 제거 후 상위 20건, 동시 4건으로 제한합니다. 첨부 파일 다운로드와 파서는 이 경로에서 실행하지 않습니다.
 
 공식 검색 API의 컬렉션 코드는 [공식 안내](https://www.edunet.net/apiApply/semantic/489)와 저장소의 [v4.5 조사 기록](api-findings.md)에 근거합니다. 검색 결과에 제공된 공식 상세 URL에만 상세 어댑터를 적용합니다. 자료 ID와 URL의 ID가 다르거나 경로를 검증하지 못한 경우 출처를 유지하고 `detail_path_unverified` 경고를 반환합니다.

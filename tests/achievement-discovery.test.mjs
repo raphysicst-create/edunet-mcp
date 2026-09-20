@@ -93,8 +93,8 @@ test('query input forbids arbitrary URLs, paths, empty filters and overlong vari
 });
 
 test('registry rejects unverified paths, warns stale entries and loads versioned config', () => {
-  const configured = loadSourceRegistry(Date.parse('2026-09-18'));
-  assert.equal(configured.entries.length,4);
+  const configured = loadSourceRegistry(Date.parse('2026-09-21'));
+  assert.equal(configured.entries.length,6);
   assert.deepEqual(configured.warnings,[]);
   const stale = {...configured.entries[0],checkedAt:'2020-01-01'};
   const inspected = inspectSourceRegistry([stale,{...stale,officialHost:'127.0.0.1'},{...stale,pathPattern:'/unverified'}],Date.parse('2026-09-18'));
@@ -185,7 +185,7 @@ test('metadata cannot silently replace source URL even with a matching resource 
 });
 
 test('missing API configuration does not claim to have contacted official registry paths', async () => {
-  const search=createAchievementSearch({references,search:async()=>{throw Object.assign(new Error('configuration'),{code:'CONFIGURATION'});}});
+  const search=createAchievementSearch({references,registry:[],search:async()=>{throw Object.assign(new Error('configuration'),{code:'CONFIGURATION'});}});
   const result=await search(parsed({query:'과학'}));
   assert.equal(result.status,'search_unavailable');
   assert.equal(result.coverage.officialApiQueried,false);

@@ -1,5 +1,15 @@
 # Vercel 원격 MCP 배포
 
+## RC 배포 식별과 검증
+
+빌드는 제품 소스·설정·패키지/lockfile·빌드 스크립트의 파일별 SHA256을 manifest에 넣습니다. `sourceDigest`는 파일 해시 목록의 SHA256, `manifestDigest`는 해당 필드를 제외한 manifest 본문의 SHA256입니다. `sourceCommit`은 확인한 값만 사용하며 미확인 시 `null`입니다. `gitClean`은 manifest에 포함된 제품 입력 경로에 대한 상태이며 Git이 없는 빌드는 `null`입니다.
+
+함수 내부 `dist/build-manifest.json`과 공개 `/build-manifest.json`에 같은 manifest를 넣습니다. MCP 응답에는 `X-Edunet-Source-Digest`, `X-Edunet-Manifest-Digest`, 확인된 경우 `X-Edunet-Source-Commit` 헤더를 제공합니다. `verify:remote`는 실제 원격 소스 digest를 로컬 입력과 비교하여 같은 버전의 다른 소스 배포를 거절합니다.
+
+검증 배포는 기존 프로젝트에서 `npx vercel@59.23.1 deploy --prod --skip-domain`으로 운영 설정을 쓰는 staged 배포를 생성합니다. 이 옵션은 운영 도메인의 자동 전환을 막습니다. Windows native bundle을 Linux로 올리지 않고 플랫폼에서 소스를 빌드합니다. 정확한 배포 ID·고유 URL·manifest를 기록한 뒤 평가하며, 승인 전에는 `promote`를 실행하지 않습니다. [공식 staged 배포 안내](https://vercel.com/docs/cli/deploying-from-cli).
+
+`npm run verify:remote -- https://DEPLOYMENT_HOST/api/mcp --read`는 지정된 중학교 과학 PDF와 `[9과05-01]` A–E를 확인합니다. 이 smoke 검사는 전체 의미 채점을 대신하지 않습니다.
+
 `api/mcp.mjs`는 로컬 stdio와 같은 `createServer`를 Streamable HTTP로 제공합니다. 연결 경로는 `/api/mcp`입니다. 각 요청에 별도 MCP 서버를 만들고 세션을 저장하지 않아 서버리스 인스턴스 사이의 세션 고정이 필요하지 않습니다. JSON 응답을 사용하며 GET/SSE 구독은 제공하지 않습니다. 기존 2025 MCP 클라이언트와 SDK v2의 최신 요청을 지원합니다.
 
 ## 빌드와 배포

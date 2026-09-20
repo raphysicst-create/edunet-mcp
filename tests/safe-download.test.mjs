@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
 import { gzipSync } from "node:zlib";
-import { safeDownload, safeMetadataJson, validateDownloadUrl, isPublicAddress } from "../dist/worker/safe-download.js";
+import { safeDownload, safeMetadataJson, safeBoardListing, validateDownloadUrl, isPublicAddress } from "../dist/worker/safe-download.js";
 import { detectFormat } from "../dist/worker/format-detect.js";
 
 const url = "https://educon.edunet.net/CNEDU/MANUAL/clssStdDt/20260226/file/sample.pdf";
@@ -25,7 +25,8 @@ function transport(replies, lookupResult = [{ address: publicIp, family: 4 }]) {
         calls.push({ url: target.href, options });
         const req = new EventEmitter();
         req.destroy = (error) => { if (error) queueMicrotask(() => req.emit("error", error)); };
-        req.end = () => {
+        req.end = (body) => {
+          calls.at(-1).body = body;
           queueMicrotask(() => {
             options.lookup(target.hostname, {}, (error, address, family) => {
               assert.equal(error, null);
@@ -67,6 +68,23 @@ test("document URL policy blocks credentials, ports, local hosts and unverified 
     "https://educon.edunet.net/KEDNCM/2022NEWEDU/%252e%252e/a.pdf", `${url}#secret`,
     "file:///tmp/test.pdf",
   ]) assert.throws(() => validateDownloadUrl(value), errorCode("DOWNLOAD_BLOCKED"));
+});
+
+test('board POST is fixed, bounded, pinned and rejects redirects before forwarding the body',async()=>{
+  const mock=transport([{body:Buffer.from('{"success":true}'),headers:{'content-type':'application/json'}}]);
+  assert.deepEqual(await safeBoardListing({page:2,pageSize:10,keyword:'과학',school:'4'},{dependencies:mock.dependencies}),{success:true});
+  const call=mock.calls[0];assert.equal(call.url,'https://api.edunet.net/main/cmnBoard/getCmnBoardPstList');assert.equal(call.options.method,'POST');
+  assert.equal(call.options.headers['content-length'],Buffer.byteLength(call.body));
+  const body=JSON.parse(call.body);assert.equal(body.searchDTO.bbsId,19);assert.deepEqual(body.searchDTO.searchFieldStngVl,{schoolGradeSe:'4'});assert.equal(body.pagingProperty.currentPage,2);
+  for(const input of [{page:0,pageSize:10,keyword:''},{page:1,pageSize:21,keyword:''},{page:1,pageSize:10,keyword:'x'.repeat(101)},{page:1,pageSize:10,keyword:'',school:'999'}]) await assert.rejects(safeBoardListing(input,{dependencies:mock.dependencies}),errorCode('DOWNLOAD_BLOCKED'));
+  assert.equal(mock.calls.length,1);
+  const redirect=transport([{status:307,headers:{location:'https://api.edunet.net/main/cmnBoard/getCmnBoardPstList'}}]);
+  await assert.rejects(safeBoardListing({page:1,pageSize:10,keyword:''},{dependencies:redirect.dependencies}),errorCode('DOWNLOAD_BLOCKED'));assert.equal(redirect.calls.length,1);
+});
+
+test('verified board storage families accept only numeric folders and document files',()=>{
+  for(const path of ['KEDNCM/NCIC/tchboard/10055/ADE72C5D-280B.pdf','CNEDU/BBS/19_771430_20250414/bb317a25.hwp']) assert.ok(validateDownloadUrl('https://educon.edunet.net/'+path));
+  for(const path of ['KEDNCM/NCIC/other/10055/a.pdf','KEDNCM/NCIC/tchboard/10055/nested/a.pdf','CNEDU/BBS/20_771430_20250414/a.pdf','CNEDU/BBS/19_771430_20250414/a.exe','KEDNCM/NCIC/tchboard/10055/%252e%252e/a.pdf']) assert.throws(()=>validateDownloadUrl('https://educon.edunet.net/'+path),errorCode('DOWNLOAD_BLOCKED'));
 });
 
 test("public IP policy denies special IPv4 and IPv6 including metadata and transition addresses", () => {

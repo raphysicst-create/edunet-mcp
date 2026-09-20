@@ -33,6 +33,11 @@ test('Vercel artifact runs outside the checkout with parser assets and a forked 
   assert.ok(!files.some(path => /(?:^|\/)(?:\.env(?:\.[^/]*)?|\.git|\.codex|evals)(?:\/|$)/.test(path)));
   assert.ok(!files.some(path => /node_modules\/(?:onnxruntime-|@huggingface\/|sharp\/|@img\/)/.test(path)));
   const config = JSON.parse(await readFile(join(bundle.functionDirectory, '.vc-config.json'), 'utf8'));
+  const identity=JSON.parse(await readFile(join(bundle.functionDirectory,'dist/build-manifest.json'),'utf8'));
+  assert.deepEqual(JSON.parse(await readFile(join(output,'static/build-manifest.json'),'utf8')),identity);
+  assert.match(identity.sourceDigest,/^[a-f0-9]{64}$/);
+  assert.ok(identity.files['src/achievement/official-listing.ts']);
+  assert.ok(identity.files['config/achievement-source-registry.json']);
   assert.equal(config.runtime, 'nodejs24.x');
   assert.equal(config.handler, 'api/mcp.mjs');
   assert.equal(config.maxDuration, 60);
@@ -46,10 +51,12 @@ test('Vercel artifact runs outside the checkout with parser assets and a forked 
     import { fork } from 'node:child_process';
     import { fileURLToPath } from 'node:url';
     import handler from './api/mcp.mjs';
+    import { runtimeBuildIdentity } from './dist/build-identity.js';
     import { parseDocument } from './dist/worker/parsers/index.js';
     import { extractAchievements } from './dist/worker/achievement/extract.js';
     import { PDFiumLibrary } from '@hyzyla/pdfium';
     assert.equal(typeof handler, 'function');
+    assert.equal(runtimeBuildIdentity().sourceDigest,${JSON.stringify(identity.sourceDigest)});
     for (const [name, format] of [['synthetic-rows.pdf', 'pdf'], ['synthetic-merged.hwp', 'hwp'], ['synthetic-rows.hwpx', 'hwpx']]) {
       const data = await readFile(new URL('../fixtures/' + name, import.meta.url));
       const parsed = await parseDocument(data, format, { enableHwpx: true });

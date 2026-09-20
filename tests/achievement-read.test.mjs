@@ -17,7 +17,7 @@ function setup(extra={}) {
   const references=new ReferenceCodec(secret);
   let calls=0;
   const result=workerResult();
-  const deps={references,config,resolveResource:async()=>({resource,attachments,warnings:[]}),gateway:{run:async(handle)=>{calls++;const job=references.verify(handle,'worker');return {...result,attachment:{attachmentRef:job.attachmentRef,fileName:'교사용.pdf',format:'pdf',downloadStatus:'downloaded',parserName:'test',parserVersion:'1'}};}},...extra};
+  const deps={references,config,registry:[],resolveResource:async()=>({resource,attachments,warnings:[]}),gateway:{run:async(handle)=>{calls++;const job=references.verify(handle,'worker');return {...result,attachment:{attachmentRef:job.attachmentRef,fileName:'교사용.pdf',format:'pdf',downloadStatus:'downloaded',parserName:'test',parserVersion:'1'}};}},...extra};
   return {references,read:createAchievementReader(deps),deps,result,calls:()=>calls,achievementRef:references.issue('achievement',{resource})};
 }
 

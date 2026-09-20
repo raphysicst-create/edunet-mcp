@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "entries": [
     {
+      "sourceType": "achievement_level",
+      "officialHost": "api.edunet.net",
+      "pathPattern": "/main/cmnBoard/getCmnBoardPstList",
+      "discoveryMethod": "official_listing",
+      "checkedAt": "2026-09-20T11:00:00.000Z",
+      "enabled": true
+    },
+    {
+      "sourceType": "achievement_level",
+      "officialHost": "api.edunet.net",
+      "pathPattern": "/main/cmnBoard/getCmnBoardPstInfo/57/{id}",
+      "discoveryMethod": "known_detail",
+      "checkedAt": "2026-09-20T11:00:00.000Z",
+      "enabled": true
+    },
+    {
       "sourceType": "assessment_criteria",
       "officialHost": "api.edunet.net",
       "pathPattern": "/search/searchApi/search?collection=evl_data",

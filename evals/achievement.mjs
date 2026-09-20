@@ -1,9 +1,17 @@
-import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, mkdir, open } from 'node:fs/promises';
+import {dirname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { parseDocument } from '../dist/worker/parsers/index.js';
 import { extractAchievements } from '../dist/worker/achievement/extract.js';
 import { achievementRecordSchema } from '../dist/achievement/contracts.js';
+
+const outputArgs=process.argv.slice(2);
+if(outputArgs.length && (outputArgs.length!==2||outputArgs[0]!=='--out'))throw Error('Usage: node evals/achievement.mjs [--out NEW_FILE]');
+const output=outputArgs.length?resolve(outputArgs[1]):fileURLToPath(new URL('./results/achievement-latest.json',import.meta.url));
+await mkdir(dirname(output),{recursive:true});
+const outputHandle=await open(output,'wx');
 
 const golden=(await readFile(new URL('./achievement-golden.jsonl',import.meta.url),'utf8')).trim().split('\n').map(line=>JSON.parse(line));
 const fieldNames=['grade','subject','domain','achievementStandardCode','achievementStandardText','achievementLevel','description'];
@@ -61,7 +69,7 @@ const report={
   metrics:{fields:fieldMetrics,codeExactAccuracy:codes?exactCodes/codes:null,levelRawLabelFidelity:labels?exactLabels/labels:null,evidenceAttachmentRate:filled?evidenced/filled:null,unsupportedInferenceRate:filled?inferred/filled:null,formatParseSuccess:formatCounts,p95ParseAndExtractLatencyMs:latencies[Math.max(0,Math.ceil(latencies.length*.95)-1)]??null,candidateRecallAtK:null,verifiedDocumentRate:null},
   unmeasured:['Live EDUNET candidate recall and verified-document rate','Human educational-domain review','Production p95 and worker-fault search availability (covered separately by tests)'],results,
 };
-await mkdir(new URL('./results/',import.meta.url),{recursive:true});
-await writeFile(new URL('./results/achievement-latest.json',import.meta.url),JSON.stringify(report,null,2)+'\n');
+await outputHandle.writeFile(JSON.stringify(report,null,2)+'\n');
+await outputHandle.close();
 console.log(JSON.stringify({...report,results:results.map(({id,pass})=>({id,pass}))},null,2));
 if(report.passed!==report.cases||report.metrics.levelRawLabelFidelity!==1||report.metrics.evidenceAttachmentRate!==1||report.metrics.unsupportedInferenceRate!==0)process.exitCode=1;

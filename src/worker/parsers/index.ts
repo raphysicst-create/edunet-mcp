@@ -4,6 +4,7 @@ import type { EvidenceLocation, Warning } from "../../achievement/contracts.js";
 import type { ParsedDocument, RawBlock } from "../intermediate/blocks.js";
 import { ParseDocumentError } from "./errors.js";
 import { preflightHwp, preflightHwpx } from "./preflight.js";
+import { restorePdfRulingSpans } from "./pdf-ruled-tables.js";
 
 export { ParseDocumentError } from "./errors.js";
 export type { ParsedDocument, RawBlock } from "../intermediate/blocks.js";
@@ -27,6 +28,10 @@ export async function parseDocument(bytes: Uint8Array, format: "pdf" | "hwp" | "
     throw new ParseDocumentError(noText ? "OCR_REQUIRED" : result.code ?? "PARSE_ERROR", noText ? "Document has no usable text layer; OCR is outside the supported scope" : "Document parser could not read this file", noText ? "no_text" : "parse_failed");
   }
   const warnings: Warning[] = (result.warnings ?? []).map(warning => ({ code: warning.code, message: warning.message }));
+  if (format === "pdf") {
+    try { warnings.push(...await restorePdfRulingSpans(bytes, result.blocks)); }
+    catch { warnings.push({code: "PDF_TABLE_STRUCTURE_UNVERIFIED", message: "PDF 표의 선 기반 병합 검증을 완료하지 못했습니다. 불확실한 관계는 추정하지 않습니다."}); }
+  }
   warnings.push({ code: "VISUAL_CONTENT_NOT_INTERPRETED", message: "이미지·그래프·도형의 의미와 OCR은 해석하지 않았습니다." });
   const exactPages = format === "pdf" || result.metadata?.pageMode === "layout";
   const blocks: RawBlock[] = [];

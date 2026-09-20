@@ -5,6 +5,7 @@ import {
 } from "@modelcontextprotocol/server";
 import { createServer } from "./server.js";
 import { createLogger } from "./logger.js";
+import { runtimeBuildIdentity } from "./build-identity.js";
 import { loadAchievementConfig } from "./achievement/config.js";
 import { createWorkerGateway } from "./achievement/gateway.js";
 
@@ -78,6 +79,12 @@ export function createRemoteHandler(factory: ServerFactory = createDefaultFactor
     response.once("close", disconnect);
     response.setHeader("Cache-Control", "no-store");
     response.setHeader("X-Content-Type-Options", "nosniff");
+    const build = runtimeBuildIdentity();
+    if (build) {
+      response.setHeader("X-Edunet-Source-Digest", build.sourceDigest);
+      response.setHeader("X-Edunet-Manifest-Digest", build.manifestDigest);
+      if (build.sourceCommit) response.setHeader("X-Edunet-Source-Commit", build.sourceCommit);
+    }
 
     const abortable = <T>(work: Promise<T>, discard?: (value: T) => Promise<void>): Promise<T> => new Promise((resolve, reject) => {
       const abort = (): void => { done(); reject(new Error("Request disconnected.")); };
