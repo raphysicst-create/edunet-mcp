@@ -49,7 +49,7 @@ test("remote MCP SDK client discovers beta tools and calls across stateless HTTP
   const client = new Client({ name: "remote-test", version: "1.0.0" });
   t.after(() => client.close());
   await client.connect(new StreamableHTTPClientTransport(new URL(url)));
-  assert.equal(client.getServerVersion().version, "1.1.0-rc.3");
+  assert.equal(client.getServerVersion().version, "1.1.0-rc.4");
   assert.deepEqual((await client.listTools()).tools.map(tool => tool.name), [
     "search_edunet", "search_edunet_achievement", "read_edunet_achievement",
   ]);
@@ -68,7 +68,7 @@ test("legacy initialize, initialized notification, list and tool call need no se
   assert.equal(initialized.status, 200);
   assert.equal(initialized.headers.get("mcp-session-id"), null);
   assert.match(initialized.headers.get("content-type"), /application\/json/);
-  assert.equal((await initialized.json()).result.serverInfo.version, "1.1.0-rc.3");
+  assert.equal((await initialized.json()).result.serverInfo.version, "1.1.0-rc.4");
   const notification = await post({ jsonrpc: "2.0", method: "notifications/initialized" });
   assert.equal(notification.status, 202);
   const listed = await post({ jsonrpc: "2.0", id: 2, method: "tools/list" });

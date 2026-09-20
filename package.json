@@ -1,6 +1,6 @@
 {
   "name": "edunet-mcp",
-  "version": "1.1.0-rc.3",
+  "version": "1.1.0-rc.4",
   "private": true,
   "description": "에듀넷 교육자료 검색 로컬 MCP 서버",
   "type": "module",

@@ -85,7 +85,7 @@ function detectHeader(cells: Map<number, RawBlock>): Header | undefined {
     for (const [key, pattern] of Object.entries(headers)) if (pattern.test(value)) columns.set(key, column);
     // The official NCIC header spans the label and description columns.
     // Accept only the parser's explicit two-column span, not a guessed layout.
-    if (/^성취기준별\s*성취수준$/.test(value) && cell.columnSpan === 2 && cell.location.column === column) {
+    if (/^성취기준별\s*성취수준(?:\s+진술)?$/.test(value) && cell.columnSpan === 2 && cell.location.column === column) {
       columns.set("level", column); columns.set("description", column + 1);
     }
     if (knownLevel.test(value)) levels.set(column, cell);
@@ -98,7 +98,7 @@ function extractTable(blocks: RawBlock[], context: Context, hash: string): { rec
   const records: AchievementRecord[] = [];
   const orientations = new Set<DocumentProfile["tableOrientation"]>();
   const rows = tableRows(blocks);
-  if (blocks.some(b => /^성취기준별\s*성취수준$/.test(b.text.trim()) && b.columnSpan === 2)) {
+  if (blocks.some(b => /^성취기준별\s*성취수준(?:\s+진술)?$/.test(b.text.trim()) && b.columnSpan === 2)) {
     // A combined NCIC header alone cannot establish which standard owns a
     // level. Reject fragmented/unreported merges instead of emitting a code
     // for only the row on which its vertically centered text happened to land.

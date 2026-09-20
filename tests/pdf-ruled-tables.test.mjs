@@ -77,3 +77,31 @@ test('numbered common-course codes preserve the original course separator',()=>{
  assert.equal(records.length,5);assert.ok(records.every(r=>r.achievementStandardCode.normalized==='[10공영1-01-01]'));
  assert.equal(codePattern.test('[10공영12-01-01]'),false);
 });
+
+test('explicit HWP spans support the statement header without guessing standard ownership',()=>{
+ const table=fixture();table.table.cells[0][1].text='성취기준별 성취수준 진술';
+ table.table.cells[1][0]={...cell('[10한사1-01-01] 자료를 읽는다.'),rowSpan:5};
+ table.table.cells[2][0].text='';table.table.cells[3][0].text='';
+ const records=extractAchievements(document(table),'hash').records.filter(r=>r.achievementStandardCode?.raw==='[10한사1-01-01]');
+ assert.deepEqual(records.map(r=>r.achievementLevel.rawLabel),['A','B','C','D','E']);
+ assert.ok(records.every(r=>r.achievementStandardText.raw==='자료를 읽는다.'));
+ table.table.cells[1][0].rowSpan=1;
+ assert.equal(extractAchievements(document(table),'hash').records.length,0);
+});
+
+test('statement-header PDF repair still requires actual painted boundaries',()=>{
+ const table=fixture();table.table.cells[0][1].text='성취기준별 성취수준 진술';
+ const unsupported=structuredClone(table);
+ assert.equal(restoreRuledStandardCells(unsupported,[]),false);
+ assert.equal(extractAchievements(document(unsupported),'hash').records.length,0);
+ assert.equal(restoreRuledStandardCells(table,rulings()),true);
+ assert.equal(extractAchievements(document(table),'hash').records.filter(r=>r.achievementStandardCode?.raw==='[9과01-01]').length,5);
+});
+
+test('unrecognized statement suffixes and unreported column spans do not become level headers',()=>{
+ for(const [text,span] of [['성취기준별 성취수준 진술 예시',2],['성취기준별 성취수준 진술',1]]) {
+  const table=fixture();assert.equal(restoreRuledStandardCells(table,rulings()),true);
+  table.table.cells[0][1].text=text;table.table.cells[0][1].colSpan=span;
+  assert.ok(extractAchievements(document(table),'hash').records.every(r=>!r.achievementLevel));
+ }
+});

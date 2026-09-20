@@ -13,7 +13,7 @@ function positions(values: number[]): number[] {
 function ncicTable(block: IRBlock): boolean {
   return block.type === "table" && block.table?.cols === 3
     && block.table.cells[0]?.[0]?.text.trim() === "성취기준"
-    && /^성취기준별\s*성취수준$/.test(block.table.cells[0]?.[1]?.text.trim() ?? "")
+    && /^성취기준별\s*성취수준(?:\s+진술)?$/.test(block.table.cells[0]?.[1]?.text.trim() ?? "")
     && block.table.cells[0]?.[1]?.colSpan === 2;
 }
 

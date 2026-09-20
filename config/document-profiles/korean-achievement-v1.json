@@ -1,6 +1,6 @@
 {
   "profileId": "korean-achievement-explicit",
-  "profileVersion": "1.2.0",
+  "profileVersion": "1.2.1",
   "headerPatterns": {
     "code": "^(성취기준\\s*코드|코드)$",
     "standard": "^(교육과정\\s*)?성취기준(\\s*(내용|설명))?$",
