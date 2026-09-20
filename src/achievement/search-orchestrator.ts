@@ -169,6 +169,7 @@ export function createAchievementSearch(deps: AchievementSearchDependencies): (i
           coverage.officialListing = {attempted: true, status: "ok", page: input.page, keyword: page.keyword,
             ...(page.school ? {school: page.school} : {}), hasNext: page.hasNext};
           upstreamHasNext ||= page.hasNext;
+          if(page.keywordRelaxed) warnings.push({code:"official_listing_keyword_relaxed",message:"교과·과목명으로 일치하는 게시판 제목이 없어 같은 학교급 목록으로 탐색 범위를 넓혔습니다. 후보의 원문 교과는 아직 확인하지 않았습니다."});
           for (const resource of page.resources) resources.set(identity(resource), {resource, achievementQuery: false, registry: BOARD_LIST_PATH});
         } catch {
           checkCancellation();

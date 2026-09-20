@@ -33,6 +33,41 @@ test('listing validates page, board, visibility and school scope and uses total 
   await assert.rejects(listOfficialAchievements(input,undefined,async()=>payload([row],2)));
 });
 
+test('elementary subject requests can discover grade-band collections without inventing subject metadata',async()=>{
+ const input=parsed({query:'초등학교 국어 성취수준'});
+ assert.deepEqual(listingConditions(input),{school:'3',keyword:''});
+ assert.deepEqual(listingConditions(parsed({achievementStandardCode:'[4수01-01]'})),{school:'3',keyword:''});
+ const page=await listOfficialAchievements(input,undefined,async request=>{
+   assert.equal(request.keyword,'');assert.equal(request.school,'3');assert.equal(request.pageSize,10);
+   return payload([{...row,pstId:42,ttl:'(초) 3~4학년군 성취수준',cn:'학년군 묶음 자료',fieldVal:'2:3:schoolGradeSe:Y'}]);
+ });
+ assert.equal(page.resources.length,1);assert.ok(!page.resources[0].snippet.includes('국어'));
+});
+
+test('parenthesized geography and history codes yield school and subject search hints',()=>{
+ assert.deepEqual(listingConditions(parsed({achievementStandardCode:'[9사(지리)01-01]'})),{school:'4',keyword:'사회'});
+ assert.deepEqual(listingConditions(parsed({query:'[9역01-01]의 성취수준'})),{school:'4',keyword:'역사'});
+});
+
+test('common high-school courses use broad official subject titles and retain numbered-code search scope',()=>{
+ for(const [subject,keyword] of [['공통국어1','국어'],['공통수학1','수학'],['공통영어1','영어'],['한국사1','역사'],['통합과학1','과학'],['생태와 환경','환경'],['진로와 직업','진로와직업']])
+   assert.deepEqual(listingConditions(parsed({subject,grade:'고등학교'})),{keyword,school:'58'});
+ for(const [code,keyword] of [['10공국1-01-01','국어'],['10공수1-01-01','수학'],['10공영1-01-01','영어'],['10한사1-01-01','역사'],['10통과1-01-01','과학']])
+   assert.deepEqual(listingConditions(parsed({achievementStandardCode:`[${code}]`})),{keyword,school:'58'});
+});
+
+test('a zero-total course title relaxes once to the same school and page, but invalid or exhausted pages do not',async()=>{
+ const input=parsed({subject:'인간과 철학',grade:'고등학교',page:2});const calls=[];
+ const result=await listOfficialAchievements(input,undefined,async request=>{
+   calls.push(request);return request.keyword?payload([],2,0):payload([{...row,fieldVal:'2:58:schoolGradeSe:Y'}],2,25);
+ });
+ assert.equal(calls.length,2);assert.ok(calls.every(r=>r.school==='58'&&r.page===2&&r.pageSize===10));
+ assert.equal(result.keywordRelaxed,true);assert.equal(result.keyword,'');assert.equal(result.hasNext,true);
+ let exhausted=0;await listOfficialAchievements(input,undefined,async()=>{exhausted++;return payload([],2,1);});assert.equal(exhausted,1);
+  let invalid=0;await assert.rejects(listOfficialAchievements(input,undefined,async()=>{invalid++;return payload([],1,0);}));assert.equal(invalid,1);
+  await assert.rejects(listOfficialAchievements(parsed({subject:'과학',grade:'중학교'}),undefined,async()=>payload([row],1,0)));
+});
+
 test('board detail resolves public identity and rejects cross-post or missing attachment ownership',async()=>{
   assert.equal(resourceDetailUrl(resource).pathname,'/main/cmnBoard/getCmnBoardPstInfo/57/602681');
   for(const url of ['https://www.edunet.net/cmnBoard/view/58/602681','https://www.edunet.net/cmnBoard/view/57/999']) assert.equal(resourceDetailUrl({...resource,sourceUrl:url}),undefined);

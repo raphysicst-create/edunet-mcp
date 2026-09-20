@@ -36,26 +36,31 @@ export function restoreRuledStandardCells(block: IRBlock, lines: Ruling[]): bool
     || !near(ys[0]!, top) || !near(ys.at(-1)!, bottom)) return false;
   const covers = (y: number, x1: number, x2: number): boolean => horizontal.some(l => near(l.y1, y)
     && Math.min(l.x1, l.x2) <= x1 + tolerance && Math.max(l.x1, l.x2) >= x2 - tolerance);
-  // Every physical row must have an explicit full level/description boundary.
-  if (ys.some(y => !covers(y, xs[1]!, xs[3]!))) return false;
-  if (![ys[0]!, ys[1]!, ys.at(-1)!].every(y => covers(y, xs[0]!, xs[1]!))) return false;
-  const spans: {start: number; end: number; text: string}[] = [];
-  let start = 1;
-  for (let boundary = 2; boundary < ys.length; boundary++) {
-    if (!covers(ys[boundary]!, xs[0]!, xs[1]!)) {
-      // Partial/inconsistent lines in the standard column are ambiguous.
-      if (horizontal.some(l => near(l.y1, ys[boundary]!) && Math.min(l.x1,l.x2) < xs[1]! - tolerance)) return false;
-      continue;
+  // Labels establish physical rows; adjacent descriptions can explicitly span
+  // several labels (for example A/B share one cell). Inspect each column's lines.
+  if (ys.some(y => !covers(y, xs[1]!, xs[2]!))) return false;
+  const spans: {column: number; start: number; end: number; text: string}[] = [];
+  for (const column of [0, 2]) {
+    const x1=xs[column]!, x2=xs[column+1]!;
+    if (![ys[0]!,ys[1]!,ys.at(-1)!].every(y=>covers(y,x1,x2))) return false;
+    let start = 1;
+    for (let boundary = 2; boundary < ys.length; boundary++) {
+      if (!covers(ys[boundary]!, x1, x2)) {
+        // A line that enters only part of the cell is ambiguous, not a merge.
+        if (horizontal.some(l => near(l.y1,ys[boundary]!)
+          && Math.max(l.x1,l.x2)>x1+tolerance && Math.min(l.x1,l.x2)<x2-tolerance)) return false;
+        continue;
+      }
+      const cells = table.cells.slice(start, boundary).map(row => row[column]);
+      if (cells.some(c => !c || c.colSpan !== 1)) return false;
+      const text = cells.map(c => c!.text).filter(t => t.trim()).join("\n");
+      spans.push({column,start,end:boundary,text}); start=boundary;
     }
-    const cells = table.cells.slice(start, boundary).map(row => row[0]);
-    if (cells.some(c => !c || c.colSpan !== 1)) return false;
-    const text = cells.map(c => c!.text).filter(t => t.trim()).join("\n");
-    spans.push({start, end: boundary, text}); start = boundary;
+    if (start !== table.rows) return false;
   }
-  if (start !== table.rows) return false;
   for (const span of spans) {
-    table.cells[span.start]![0] = {text: span.text, rowSpan: span.end - span.start, colSpan: 1};
-    for (let row = span.start + 1; row < span.end; row++) table.cells[row]![0] = {text: "", rowSpan: 1, colSpan: 1};
+    table.cells[span.start]![span.column] = {text: span.text, rowSpan: span.end - span.start, colSpan: 1};
+    for (let row = span.start + 1; row < span.end; row++) table.cells[row]![span.column] = {text: "", rowSpan: 1, colSpan: 1};
   }
   return true;
 }

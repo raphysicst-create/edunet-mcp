@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {OPS} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {restoreRuledStandardCells,paintedLines} from '../dist/worker/parsers/pdf-ruled-tables.js';
 import {extractAchievements} from '../dist/worker/achievement/extract.js';
+import {codePattern} from '../dist/worker/achievement/profile.js';
 
 const cell=(text,colSpan=1)=>({text,rowSpan:1,colSpan});
 const fixture=()=>({type:'table',bbox:{page:1,x:0,y:0,width:300,height:140},table:{rows:7,cols:3,cells:[
@@ -41,4 +42,38 @@ test('missing or inconsistent ruling evidence never guesses a merged cell from t
 test('only painted straight paths are considered; transforms and save/restore preserve coordinates',()=>{
  const lines=paintedLines({fnArray:[OPS.save,OPS.transform,OPS.constructPath,OPS.stroke,OPS.restore,OPS.constructPath,OPS.endPath],argsArray:[[],[1,0,0,1,100,200],[[OPS.moveTo,OPS.lineTo],[0,0,20,0]],[],[],[[OPS.moveTo,OPS.lineTo],[0,0,99,0]],[]]});
  assert.deepEqual(lines,[{x1:100,y1:200,x2:120,y2:200}]);
+});
+
+test('independent painted description spans preserve shared A/B and C/D text and evidence anchors',()=>{
+ const table=fixture();
+ table.table.cells[1][2].text='공통 첫 설명.';table.table.cells[2][2].text='';
+ table.table.cells[3][2].text='공통 둘째';table.table.cells[4][2].text='설명.';
+ const lines=rulings().map(l=>[100,60].includes(l.y1)&&l.y1===l.y2?{...l,x2:120}:l);
+ assert.equal(restoreRuledStandardCells(table,lines),true);
+ assert.equal(table.table.cells[1][2].rowSpan,2);assert.equal(table.table.cells[3][2].rowSpan,2);
+ const records=extractAchievements(document(table),'hash').records.filter(r=>r.achievementStandardCode?.raw==='[9과01-01]');
+ assert.deepEqual(records.map(r=>r.description.normalized),['공통 첫 설명.','공통 첫 설명.','공통 둘째 설명.','공통 둘째 설명.','결과를 확인한다.']);
+ assert.equal(records[0].description.evidence[0].location.row,records[1].description.evidence[0].location.row);
+});
+
+test('an incomplete line inside a description cell rejects the whole repair without mutations',()=>{
+ const table=fixture(),before=JSON.stringify(table);
+ const lines=rulings().map(l=>l.y1===100&&l.y2===100?{...l,x2:170}:l);
+ assert.equal(restoreRuledStandardCells(table,lines),false);assert.equal(JSON.stringify(table),before);
+});
+
+test('explicit parenthesized subject codes remain literal and malformed parentheses are rejected',()=>{
+ const table=fixture();table.table.cells[2][0].text='[9사(지리)01-01] 자료의';
+ assert.equal(restoreRuledStandardCells(table,rulings()),true);
+ const records=extractAchievements(document(table),'hash').records.filter(r=>r.achievementStandardCode?.raw==='[9사(지리)01-01]');
+ assert.equal(records.length,5);assert.ok(records.every(r=>r.achievementStandardCode.normalized==='[9사(지리)01-01]'));
+ for(const code of ['[9사(지리01-01]','[9사)지리(01-01]','[9사((지리))01-01]'])assert.equal(codePattern.test(code),false);
+});
+
+test('numbered common-course codes preserve the original course separator',()=>{
+ const table=fixture();table.table.cells[2][0].text='[10공영1-01-01] 내용을';
+ assert.equal(restoreRuledStandardCells(table,rulings()),true);
+ const records=extractAchievements(document(table),'hash').records.filter(r=>r.achievementStandardCode?.raw==='[10공영1-01-01]');
+ assert.equal(records.length,5);assert.ok(records.every(r=>r.achievementStandardCode.normalized==='[10공영1-01-01]'));
+ assert.equal(codePattern.test('[10공영12-01-01]'),false);
 });

@@ -48,7 +48,8 @@ export function createWorkerGateway(options:GatewayOptions):WorkerGateway {
         try {processChild.send({handle},error=>{if(error) finish(new WorkerUnavailableError("WORKER_CONNECTION_FAILED"));});}
         catch {finish(new WorkerUnavailableError("WORKER_CONNECTION_FAILED"));}
       });
-      if(result.status==="parse_failed" || result.status==="worker_unavailable") {
+      const documentOutputLimit=result.status==="parse_failed" && result.warnings.some(warning=>warning.code==="WORKER_OUTPUT_TOO_LARGE");
+      if((result.status==="parse_failed" && !documentOutputLimit) || result.status==="worker_unavailable") {
         failures++;
         if(failures >= (options.failureThreshold ?? 3)) {openUntil=now()+(options.cooldownMs ?? 30000);logger.warn("worker_circuit_open",{failures});}
       } else {failures=0;openUntil=0;}

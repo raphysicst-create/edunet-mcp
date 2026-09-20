@@ -1,6 +1,6 @@
 {
   "profileId": "korean-achievement-explicit",
-  "profileVersion": "1.1.0",
+  "profileVersion": "1.2.0",
   "headerPatterns": {
     "code": "^(성취기준\\s*코드|코드)$",
     "standard": "^(교육과정\\s*)?성취기준(\\s*(내용|설명))?$",
@@ -10,8 +10,20 @@
     "subject": "^(과목|교과)$",
     "domain": "^영역$"
   },
-  "codePattern": "\\[\\s*\\d{1,2}[가-힣A-Za-z·ㆍ]{1,12}\\d{2}-\\d{2}\\s*\\]",
-  "levelPatterns": ["[A-E]", "상", "중", "하", "매우 우수", "우수", "보통", "미흡", "매우 미흡", "도달", "미도달"],
+  "codePattern": "\\[\\s*\\d{1,2}[가-힣A-Za-z·ㆍ]{1,12}(?:\\([가-힣A-Za-z·ㆍ]{1,12}\\))?(?:[1-9]-)?\\d{2}-\\d{2}\\s*\\]",
+  "levelPatterns": [
+    "[A-E]",
+    "상",
+    "중",
+    "하",
+    "매우 우수",
+    "우수",
+    "보통",
+    "미흡",
+    "매우 미흡",
+    "도달",
+    "미도달"
+  ],
   "knownLimitations": [
     "Only explicit headers, source labels, and parser-reported merged cell ranges are used.",
     "Unmarked continuation rows and visual-only relationships are not inferred.",

@@ -22,6 +22,16 @@ test('worker admission and caller cancellation are bounded',async()=>{
   const c=child(()=>{});const gateway=createWorkerGateway({secret:'x'.repeat(32),maxConcurrent:1,timeoutMs:100,spawn:()=>c});const abort=new AbortController();const pending=gateway.run('h',abort.signal);
   await assert.rejects(gateway.run('h'),/WORKER_BUSY/);abort.abort();await assert.rejects(pending,/ABORTED/);assert.equal(c.killed,true);
 });
+
+test('a document output limit does not open the infrastructure circuit for unrelated reads',async()=>{
+ let calls=0;
+ const gateway=createWorkerGateway({secret:'x'.repeat(32),failureThreshold:3,spawn:()=>child(c=>{
+   calls++;c.emit('message',calls<=3?{status:'parse_failed',records:[],warnings:[{code:'WORKER_OUTPUT_TOO_LARGE',message:'document limit'}],visualContentInterpreted:false}
+     :{status:'metadata_only',records:[],warnings:[],visualContentInterpreted:false});
+ })});
+ for(let i=0;i<3;i++)assert.equal((await gateway.run('h')).status,'parse_failed');
+ assert.equal((await gateway.run('h')).status,'metadata_only');assert.equal(calls,4);
+});
 test('search runtime import graph never loads parser libraries or worker entry',()=>{
   const seen=new Set();function walk(file){if(seen.has(file))return;seen.add(file);const text=readFileSync(file,'utf8');assert.doesNotMatch(text,/from ["'](?:kordoc|pdfjs-dist|hwp\.js|cfb|fflate|sharp|onnxruntime)/);for(const match of text.matchAll(/(?:from\s+|import\s*)["'](\.[^"']+\.js)["']/g)){const target=resolve(dirname(file),match[1]);assert.doesNotMatch(target,/[\\/]worker[\\/](?:entry|parsers|achievement)[\\/.]/);walk(target);}}walk(resolve('dist/server.js'));
 });

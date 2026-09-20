@@ -29,6 +29,17 @@ test('metadata-first read lists all attachments and never downloads ambiguous do
   assert.equal(r.status,'verified_extraction');assert.equal(r.records[0].achievementLevel.rawLabel,'상');assert.equal(s.calls(),1);
 });
 
+test('bare standards cannot masquerade as verified achievement levels and retain raw fallback',async()=>{
+ const s=setup();const bare={...record('bare')};delete bare.achievementLevel;delete bare.description;
+ s.result.records=[bare,...s.result.records];
+ const listing=await s.read({achievementRef:s.achievementRef});
+ const args={achievementRef:s.achievementRef,attachmentRef:listing.attachments[0].attachmentRef};
+ const mixed=await s.read(args);assert.deepEqual(mixed.records.map(r=>r.id),['r1','r2']);
+ assert.ok(mixed.warnings.some(w=>w.code==='STANDARD_ONLY_RECORDS_OMITTED'));
+ s.result.records=[bare];const only=await s.read(args);
+ assert.equal(only.status,'metadata_only');assert.deepEqual(only.records,[]);assert.equal(only.rawBlocks[0].text,'원문입니다.');
+});
+
 test('attachment belongs to resource, remains present in current metadata, and disabled formats never download',async()=>{
   const s=setup();const wrong=s.references.issue('attachment',{resourceId:'other',attachmentId:'a'});
   await assert.rejects(s.read({achievementRef:s.achievementRef,attachmentRef:wrong}),/참조/);

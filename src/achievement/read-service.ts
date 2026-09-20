@@ -99,7 +99,10 @@ export function createAchievementReader(deps:ReadDependencies) {
     }
     let result:WorkerResult;
     try {
-      const handle=deps.references.issue("worker",{resource,attachmentId:attachment.id,attachmentRef,mode,formats:{pdf:deps.config.pdfReadEnabled,hwp:deps.config.hwpReadEnabled,hwpx:deps.config.hwpxReadEnabled}},60_000);
+      const codeOnly=mode==="achievement" && input.achievementStandardCode && !input.grade && !input.subject && !input.levelLabel;
+      const handle=deps.references.issue("worker",{resource,attachmentId:attachment.id,attachmentRef,mode,
+        ...(codeOnly?{structuredCodeOnly:true,achievementStandardCode:input.achievementStandardCode}:{}),
+        formats:{pdf:deps.config.pdfReadEnabled,hwp:deps.config.hwpReadEnabled,hwpx:deps.config.hwpxReadEnabled}},60_000);
       result=workerResultSchema.parse(await cancellable(()=>deps.gateway.run(handle,signal),signal));
       if(result.status==="verified_extraction" && (!result.records.length || !result.contentHash || result.attachment?.downloadStatus!=="downloaded")) throw new WorkerUnavailableError("WORKER_INVALID_RESPONSE");
       if(result.attachment && (result.attachment.attachmentRef!==attachmentRef || result.attachment.fileName!==attachment.fileName || result.attachment.format!==attachment.format)) throw new WorkerUnavailableError("WORKER_INVALID_RESPONSE");
@@ -112,7 +115,11 @@ export function createAchievementReader(deps:ReadDependencies) {
     const {contentHash,...read}=result;
     const output:ReadAchievementResponse={...base,...read,warnings:[...base.warnings,...read.warnings],source:{...base.source,...(contentHash?{contentHash}:{})},records:[],rawBlocks:[]};
     if(prior && (prior.contentHash!==contentHash || prior.parserVersion!==result.attachment?.parserVersion || prior.profileVersion!==result.documentProfile?.profileVersion)) throw new ReferenceError();
-    const records=mode==="resource"?[]:result.records.filter(record=>matches(record,input));
+    const matching=mode==="resource"?[]:result.records.filter(record=>matches(record,input));
+    // The parser also recognizes bare curriculum standards. Those remain source
+    // text, but cannot establish an achievement level without its description.
+    const records=matching.filter(record=>record.achievementLevel?.rawLabel.trim() && record.description?.raw.trim());
+    if(records.length<matching.length) output.warnings.push({code:"STANDARD_ONLY_RECORDS_OMITTED",message:"수준 라벨과 설명이 함께 없는 성취기준은 검증된 성취수준 레코드에서 제외했습니다. 성취수준이 없으면 원문 블록으로 제공합니다."});
     const hardOversize=records.some(record=>JSON.stringify(record).length>20000);
     if(mode==="resource" && result.status==="verified_extraction") output.status="metadata_only";
     if(mode==="achievement" && result.status==="verified_extraction" && !records.length) {
