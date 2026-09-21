@@ -1,5 +1,9 @@
 # EDUNET evals
 
+## 성취수준 제품 평가
+
+실문서 discovery recall, 레코드/필드 precision·recall, 원문 라벨·근거 정확도, 첨부 선택을 측정하는 별도 실행기는 [achievement-product 안내](achievement-product/README.md)를 참고한다. `npm run eval:achievement:product -- --mode audit`로 코퍼스 준비 상태를 확인한다. 교사 질의 30개와 클라이언트 평가 시나리오를 제공하며, 사람 검수 전에는 품질 합격을 내지 않는다. 기존 `eval:achievement`의 합성·레이아웃 smoke 결과와 합산하지 않는다.
+
 ## 성취수준 RC 평가 준비
 
 제품 `1.1.0-rc.1`의 마지막 acceptance 평가자는 별도 작업 `성취수준 RC 독립 평가자 구현 및 평가`에서 평가기를 구현하고 독립 원문 정답을 준비합니다. 제품 개발 진단(`evals/results/remediation-development/`)은 이 평가에 합산하지 않습니다. 고정 manifest와 실제 MCP 응답의 source/manifest digest가 일치한 고유 배포 URL만 평가 대상으로 사용합니다. 독립 평가·미제공 최종 Gate·사람 검토 상태는 별도로 기록하며 준비 완료나 실행기 테스트 통과를 제품 출시 승인으로 바꾸지 않습니다.
@@ -11,7 +15,6 @@
 [E2E 사전 검증 보고서](../docs/achievement-e2e-preflight-2026-09-20.md)는 독립 원문 정답 1개·진단 시나리오 3개와 실제 Remote PDF/HWP 대조 실행을 기록한다. **NO-GO이며 30개 문서·90개 시나리오 전체 평가가 아니다.** 공식 성취수준 게시판 경로 지원과 현재 RC의 원격 배포 일치가 선행되어야 한다.
 
 `achievement-remote-probe.mjs`는 `--corpus FILE --endpoint HTTPS_URL --out NEW_FILE`을 받는 읽기 전용 진단 수집기다. 입력 정답을 먼저 독립적으로 확정하고 실행하며, 서명 참조를 해시로 치환한 인자·응답·지연시간을 저장한다. exit 0은 수집 완료만 뜻한다. 의미 채점·사람 검토·출시 Gate를 대신하지 않으며 기존 결과 경로는 거절한다. 과거 모델 관측용 실행기·점수와 합산하지 않는다.
-
 ## 현재 판정 범위 — 2026-09-17
 
 이 문서는 **평가 실행기와 클라이언트 모델 행동 관측** 안내다. MCP 자체 검증은 [MCP 검증 기록](../docs/mcp-validation.md), Terra·Sonnet 관측은 [호환성 관측 요약](../docs/client-compatibility.md)으로 분리한다. 모델 점수는 MCP 합격점이나 RC 통과 조건으로 사용하지 않는다.

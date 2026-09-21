@@ -1,0 +1,633 @@
+{
+  "schemaVersion": 1,
+  "kind": "achievement_product_baseline",
+  "startedAt": "2026-09-18T00:03:20.282Z",
+  "finishedAt": "2026-09-18T00:04:01.144Z",
+  "corpusHash": "sha256:0a9912083ffe55fcfb3d16cd5a20fee8d040d3a7a8f86298b55f6e03ef2bfb46",
+  "runHash": "sha256:d1bcf7a41acc26a79ee09e6785e41b620b18ee1183d11d5a3f1c1c719ff2a2af",
+  "controlProbeHash": "sha256:17bc7fa8efb8c03b8e65bf01faa1289785eae780f6e17c90c5ad06afa4c9b4f6",
+  "evaluatorHash": "sha256:fd2d518db11af27d9fe889da632f05f80c5e1c0248c2f0185d5b115bb62f75f8",
+  "queryCount": 30,
+  "queriesWithCandidates": 0,
+  "totalCandidates": 0,
+  "completed": true,
+  "approvedGoldDocuments": 0,
+  "qualityStatus": "inconclusive",
+  "qualityPass": false,
+  "metrics": {
+    "discoveryRecallAtK": {
+      "correct": 0,
+      "total": 0,
+      "value": null,
+      "k": 10,
+      "reference": "Human-judged resource set; not all documents on EDUNET."
+    },
+    "negativeQueryAccuracy": {
+      "correct": 0,
+      "total": 0,
+      "value": null
+    },
+    "records": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": null,
+      "recall": null,
+      "f1": null
+    },
+    "levelRecords": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": null,
+      "recall": null,
+      "f1": null
+    },
+    "fields": {
+      "grade": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "subject": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "domain": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "achievementStandardCode": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "achievementStandardText": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "achievementLevel": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      },
+      "description": {
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": null,
+        "recall": null,
+        "f1": null
+      }
+    },
+    "levelRawLabelFidelity": {
+      "correct": 0,
+      "total": 0,
+      "value": null
+    },
+    "evidenceCorrectness": {
+      "correct": 0,
+      "total": 0,
+      "value": null
+    },
+    "attachmentSelection": {
+      "correct": 0,
+      "total": 0,
+      "value": null,
+      "accuracy": null,
+      "selectionCoverage": {
+        "correct": 0,
+        "total": 0,
+        "value": null
+      }
+    },
+    "abstentionCoverage": {
+      "correct": 0,
+      "total": 0,
+      "value": null
+    },
+    "documentCompleteness": {
+      "correct": 0,
+      "total": 0,
+      "value": null
+    },
+    "macroDocumentRecordRecall": {
+      "value": null,
+      "documents": 0
+    }
+  },
+  "modelRuns": 0,
+  "attachmentDocumentsRead": 0,
+  "controls": [
+    {
+      "query": "광합성",
+      "status": "partial",
+      "candidates": 9,
+      "warnings": [
+        "detail_path_unverified",
+        "candidate_metadata_limit",
+        "candidate_response_limit"
+      ],
+      "durationMs": 3339
+    },
+    {
+      "query": "성취수준",
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "warnings": [],
+      "durationMs": 1171
+    },
+    {
+      "query": "성취기준",
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "warnings": [],
+      "durationMs": 1383
+    }
+  ],
+  "queries": [
+    {
+      "id": "middle-science-01",
+      "input": {
+        "query": "광합성 성취수준",
+        "grade": "중학교 2학년",
+        "subject": "과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1282,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-science-02",
+      "input": {
+        "query": "힘과 운동 성취수준",
+        "grade": "중학교",
+        "subject": "과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1353,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-science-03",
+      "input": {
+        "query": "기체의 성질 평가기준",
+        "grade": "중학교",
+        "subject": "과학",
+        "resourceType": "assessment_criteria",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1313,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-science-04",
+      "input": {
+        "query": "전기와 자기 성취수준",
+        "grade": "중학교",
+        "subject": "과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1350,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-science-05",
+      "input": {
+        "query": "2022 개정 과학 성취수준",
+        "grade": "중학교",
+        "subject": "과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1373,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-math-01",
+      "input": {
+        "query": "일차함수 성취수준",
+        "grade": "중학교 2학년",
+        "subject": "수학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1064,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-math-02",
+      "input": {
+        "query": "도형의 닮음 평가기준",
+        "grade": "중학교",
+        "subject": "수학",
+        "resourceType": "assessment_criteria",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1355,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-math-03",
+      "input": {
+        "query": "피타고라스 정리 성취수준",
+        "grade": "중학교",
+        "subject": "수학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1355,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-math-04",
+      "input": {
+        "query": "통계 성취수준",
+        "grade": "중학교",
+        "subject": "수학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1368,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-math-05",
+      "input": {
+        "query": "2022 개정 수학 성취수준",
+        "grade": "중학교",
+        "subject": "수학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1350,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-korean-01",
+      "input": {
+        "query": "읽기 성취수준",
+        "grade": "중학교",
+        "subject": "국어",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1169,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-korean-02",
+      "input": {
+        "query": "문학 감상 성취수준",
+        "grade": "중학교",
+        "subject": "국어",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1354,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-korean-03",
+      "input": {
+        "query": "듣기 말하기 평가기준",
+        "grade": "중학교",
+        "subject": "국어",
+        "resourceType": "assessment_criteria",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1349,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-korean-04",
+      "input": {
+        "query": "주장하는 글 쓰기 성취수준",
+        "grade": "중학교",
+        "subject": "국어",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1403,
+      "officialApiQueried": true
+    },
+    {
+      "id": "middle-korean-05",
+      "input": {
+        "query": "2022 개정 매체 성취수준",
+        "grade": "중학교",
+        "subject": "국어",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1397,
+      "officialApiQueried": true
+    },
+    {
+      "id": "high-science-01",
+      "input": {
+        "query": "2022 개정 성취수준",
+        "grade": "고등학교",
+        "subject": "통합과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1401,
+      "officialApiQueried": true
+    },
+    {
+      "id": "high-science-02",
+      "input": {
+        "query": "역학 성취수준",
+        "grade": "고등학교",
+        "subject": "물리학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1379,
+      "officialApiQueried": true
+    },
+    {
+      "id": "high-science-03",
+      "input": {
+        "query": "화학 반응 평가기준",
+        "grade": "고등학교",
+        "subject": "화학",
+        "resourceType": "assessment_criteria",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1338,
+      "officialApiQueried": true
+    },
+    {
+      "id": "high-science-04",
+      "input": {
+        "query": "유전 성취수준",
+        "grade": "고등학교",
+        "subject": "생명과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1331,
+      "officialApiQueried": true
+    },
+    {
+      "id": "high-science-05",
+      "input": {
+        "query": "대기와 해양 성취수준",
+        "grade": "고등학교",
+        "subject": "지구과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1350,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-01",
+      "input": {
+        "query": "생물과 환경 성취수준",
+        "grade": "초등학교 5~6학년",
+        "subject": "과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1354,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-02",
+      "input": {
+        "query": "2022 개정 과학 성취수준",
+        "grade": "초등학교 3~4학년",
+        "subject": "과학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1423,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-03",
+      "input": {
+        "query": "분수의 덧셈과 뺄셈 성취수준",
+        "grade": "초등학교",
+        "subject": "수학",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1405,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-04",
+      "input": {
+        "query": "함수 평가기준",
+        "grade": "고등학교",
+        "subject": "수학",
+        "resourceType": "assessment_criteria",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1426,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-05",
+      "input": {
+        "query": "읽기 성취수준",
+        "grade": "초등학교",
+        "subject": "국어",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1412,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-06",
+      "input": {
+        "query": "지리 성취수준",
+        "grade": "중학교",
+        "subject": "사회",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1408,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-07",
+      "input": {
+        "query": "쓰기 평가기준",
+        "grade": "중학교",
+        "subject": "영어",
+        "resourceType": "assessment_criteria",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1402,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-08",
+      "input": {
+        "query": "프로그래밍 성취수준",
+        "grade": "중학교",
+        "subject": "정보",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1403,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-09",
+      "input": {
+        "query": "감상 성취수준",
+        "grade": "중학교",
+        "subject": "미술",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1400,
+      "officialApiQueried": true
+    },
+    {
+      "id": "other-10",
+      "input": {
+        "query": "표현 성취수준",
+        "grade": "중학교",
+        "subject": "체육",
+        "resourceType": "achievement_level",
+        "page": 1,
+        "pageSize": 20
+      },
+      "status": "not_found_in_official_index",
+      "candidates": 0,
+      "durationMs": 1411,
+      "officialApiQueried": true
+    }
+  ],
+  "validation": {
+    "contractPassed": true,
+    "passed": 279,
+    "total": 279,
+    "productEvalTests": 47
+  },
+  "limitations": [
+    "Pending relevance judgments and no approved real-document gold; recall and extraction quality unmeasured.",
+    "Returned photosynthesis candidates were not verified as achievement-level documents.",
+    "First merged result page only; not EDUNET corpus-wide recall.",
+    "Client cases are manual scenarios; no ChatGPT/Claude model runs."
+  ]
+}

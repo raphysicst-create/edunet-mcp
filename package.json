@@ -22,7 +22,10 @@
     "eval:live": "npm run build && node --env-file-if-exists=.env evals/live.mjs",
     "verify:live": "npm run build && node --env-file=.env scripts/verify-live.mjs",
     "verify:remote": "node scripts/verify-remote.mjs",
+    "health:remote": "node scripts/check-remote-health.mjs",
     "eval:achievement": "npm run build && node evals/achievement.mjs",
+    "eval:achievement:product": "npm run build && node --env-file-if-exists=.env evals/achievement-product/index.mjs",
+    "eval:achievement:product:test": "npm run build && node --test evals/tests/achievement-product-*.test.mjs",
     "verify:achievement:public": "npm run build && node scripts/verify-achievement-public.mjs"
   },
   "dependencies": {

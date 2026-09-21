@@ -1,0 +1,83 @@
+name: Remote MCP health monitor
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: remote-mcp-health-monitor
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Check remote MCP and EDUNET
+        id: health
+        continue-on-error: true
+        env:
+          MCP_ENDPOINT: https://edunet-mcp.vercel.app/api/mcp
+          HEALTH_REPORT_FILE: ${{ runner.temp }}/edunet-health-failure.md
+        run: npm run health:remote
+
+      - name: Create or update failure issue
+        if: steps.health.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MONITOR_TITLE: "[monitor] edunet-mcp remote health check failed"
+          REPORT_FILE: ${{ runner.temp }}/edunet-health-failure.md
+        run: |
+          set -euo pipefail
+          gh issue list --state open --search "$MONITOR_TITLE in:title" --limit 100 --json number,title > "$RUNNER_TEMP/open-issues.json"
+          issue_number="$(node - "$MONITOR_TITLE" "$RUNNER_TEMP/open-issues.json" <<'NODE'
+          const fs = require('node:fs');
+          const [title, path] = process.argv.slice(2);
+          const match = JSON.parse(fs.readFileSync(path, 'utf8')).find(issue => issue.title === title);
+          if (match) process.stdout.write(String(match.number));
+          NODE
+          )"
+
+          if [ -n "$issue_number" ]; then
+            gh issue comment "$issue_number" --body-file "$REPORT_FILE"
+          else
+            gh issue create --title "$MONITOR_TITLE" --body-file "$REPORT_FILE"
+          fi
+          exit 1
+
+      - name: Close recovered failure issue
+        if: steps.health.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MONITOR_TITLE: "[monitor] edunet-mcp remote health check failed"
+        run: |
+          set -euo pipefail
+          gh issue list --state open --search "$MONITOR_TITLE in:title" --limit 100 --json number,title > "$RUNNER_TEMP/open-issues.json"
+          issue_number="$(node - "$MONITOR_TITLE" "$RUNNER_TEMP/open-issues.json" <<'NODE'
+          const fs = require('node:fs');
+          const [title, path] = process.argv.slice(2);
+          const match = JSON.parse(fs.readFileSync(path, 'utf8')).find(issue => issue.title === title);
+          if (match) process.stdout.write(String(match.number));
+          NODE
+          )"
+
+          if [ -n "$issue_number" ]; then
+            recovered_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            printf 'Remote MCP health check recovered at %s.\n\nGitHub Actions run: %s/%s/actions/runs/%s\n' \
+              "$recovered_at" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
+              > "$RUNNER_TEMP/recovery-comment.md"
+            gh issue comment "$issue_number" --body-file "$RUNNER_TEMP/recovery-comment.md"
+            gh issue close "$issue_number"
+          fi

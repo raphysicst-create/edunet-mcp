@@ -90,6 +90,7 @@ Claude Code에서 `/mcp`로 연결 상태를 확인합니다.
 ### ChatGPT 웹
 
 원격 연결에는 Vercel에 배포한 서버의 `https://<배포도메인>/api/mcp`를 사용합니다. 로컬 stdio 실행 명령은 웹 클라이언트에 직접 등록하지 않습니다. 원격 서버의 빌드·환경변수·실제 호출 검증은 [Vercel 배포 안내](docs/vercel-deployment.md)를 참고하세요. 계정의 기능 제공 여부와 원격 연결 절차는 [ChatGPT 공식 개발자 모드 안내](https://platform.openai.com/docs/guides/developer-mode)를 확인하세요.
+원격 헬스 확인 절차는 [원격 MCP 모니터링 안내](docs/remote-monitoring.md)를, 빌드·환경변수·실제 호출 검증은 [Vercel 배포 안내](docs/vercel-deployment.md)를 참고하세요. 계정의 기능 제공 여부와 원격 연결 절차는 [ChatGPT 공식 개발자 모드 안내](https://platform.openai.com/docs/guides/developer-mode)를 확인하세요.
 
 ## 대표 사용 예시
 
