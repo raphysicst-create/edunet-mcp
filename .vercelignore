@@ -1,0 +1,10 @@
+.env
+.env.*
+.git
+.codex
+.scratch
+node_modules
+tests
+evals
+docs
+scripts
