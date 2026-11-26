@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 
-const DEFAULT_ENDPOINT = "https://edunet-mcp.vercel.app/api/mcp";
 const ATTEMPT_TIMEOUT_MS = 30_000;
 const MAX_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 2_000;
@@ -13,7 +12,12 @@ const RETRY_DELAY_MS = 2_000;
 // so they are intentionally not required by this lightweight availability check.
 const REQUIRED_TOOLS = ["search_edunet"];
 
-const endpoint = parseEndpoint(process.argv[2] ?? process.env.MCP_ENDPOINT ?? DEFAULT_ENDPOINT);
+function usageExit() {
+  console.error("usage: node scripts/check-remote-health.mjs <https://<host>/api/mcp> (or MCP_ENDPOINT)");
+  process.exit(2);
+}
+
+const endpoint = parseEndpoint(process.argv[2] ?? process.env.MCP_ENDPOINT ?? usageExit());
 const endpointForDisplay = displayUrl(endpoint);
 const failures = [];
 

@@ -12,7 +12,7 @@
 - 패키지: `1.1.0-beta.1`. 이번 작업에서 제품 버전·태그·제품 기능·배포를 변경하지 않았다.
 - 환경: Windows, Node `v24.18.0`.
 - 제품 소스·설정·의존성 등 42개 파일의 SHA256: [baseline.json](../evals/results/e2e-20260920/baseline.json).
-- 원격: <https://edunet-mcp.vercel.app/api/mcp>, 초기화 버전 `1.1.0-beta.1`, 도구 3개 확인.
+- 원격: <https://<배포도메인>/api/mcp>, 초기화 버전 `1.1.0-beta.1`, 도구 3개 확인.
 - Vercel CLI `inspect`가 반환한 운영 배포: `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`, READY, 2026-09-18 생성. [당시 배포 기록](vercel-deployment.md)의 ID와 일치하며, 그 기록의 소스는 `74a4d19e55de611b5435a27697d2749099409a75`다. CLI 응답에서 빌드 SHA 자체를 얻지는 못했다. 현재 소스와 같은 RC의 원격 평가로 계산하지 않는다.
 - Vercel 연결 앱은 팀 권한 403을 반환했으며 기존 CLI 인증으로 읽기 전용 확인했다. 인증·권한은 변경하지 않았다.
 
@@ -104,7 +104,7 @@
 추가한 [Remote 진단 수집기](../evals/achievement-remote-probe.mjs)는 제품 함수를 직접 호출하지 않고 Streamable HTTP MCP로만 실행한다. 사전 정답 해시, 도구 목록, 모든 도구 인자·응답, 지연시간을 저장하며 서명 참조는 SHA256 식별자로 치환한다. 현재 수집기는 진단용이며 자동 의미 채점이나 출시 승인을 수행하지 않는다.
 
 ```powershell
-node evals/achievement-remote-probe.mjs --corpus evals/results/e2e-20260920/science-ground-truth.json --endpoint https://edunet-mcp.vercel.app/api/mcp --out evals/results/NEW-RUN/science-remote-probe.json
+node evals/achievement-remote-probe.mjs --corpus evals/results/e2e-20260920/science-ground-truth.json --endpoint https://<배포도메인>/api/mcp --out evals/results/NEW-RUN/science-remote-probe.json
 ```
 
 실행 완료의 exit 0은 출시 통과가 아니다. 항상 `releaseEligible:false`를 보존한다. 기존 출력 경로는 네트워크 호출 전에 거절한다. 원문 파일·렌더링·전체 정답 설명·원시 결과는 Git 제외된 `evals/results/e2e-20260920/`에만 보존했다. 원문 재배포 허용을 확인하지 않았으므로 공개 fixture에 포함하지 않았다. 사람 검토 및 전체 검증을 마치기 전 공개 배포 승인으로 사용하지 않는다.

@@ -5,7 +5,7 @@
 - 제품 `1.1.0-rc.4`, profile `1.2.1`
 - 소스 `74d14ccac8d7f557ae4fa7b65bf4e27a6d7b772d`
 - 배포 `dpl_A2hAfTU7TcfPmtM1mofT1ZScwfxc`, READY
-- [검증 MCP](https://edunet-oceo0joah-raphysicst.vercel.app/api/mcp), [배포 상세](https://vercel.com/raphysicst/edunet-mcp/A2hAfTU7TcfPmtM1mofT1ZScwfxc)
+- [검증 MCP](https://<검증배포도메인>/api/mcp), [배포 상세](https://vercel.com/raphysicst/edunet-mcp/A2hAfTU7TcfPmtM1mofT1ZScwfxc)
 - sourceDigest `7b2b906fe08a4e169662b9a0e08a02457a273ba9678f3cbae6d833a97e2cccb6`
 - 원격 manifestDigest `19b97e7edf0043bba32fcc43f945bce320729a5e813d77757b690e32b1f72ec2`
 
@@ -63,7 +63,7 @@ RC3와 RC4의 **첫 검색 응답** 발견은 모두 85/90입니다. v4에서 �
 
 ## 운영 상태와 남은 검증
 
-`09:38:14Z` 공개 도메인 조회에서도 `edunet-mcp.vercel.app`은 기존 `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`를 가리켰습니다. RC4는 검증 배포입니다. 같은 시각대에 RC4의 `09:05:43Z` 이후 error 로그를 조회한 결과 0건이었습니다. 단일 조회 결과이며 장애 주입·지속 운영 안정성의 증명은 아닙니다. 증거는 `rc4-production-alias-evidence.json`, `rc4-runtime-error-logs.jsonl`, `rc4-runtime-error-query.log`입니다.
+`09:38:14Z` 공개 도메인 조회에서도 `<배포도메인>`은 기존 `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`를 가리켰습니다. RC4는 검증 배포입니다. 같은 시각대에 RC4의 `09:05:43Z` 이후 error 로그를 조회한 결과 0건이었습니다. 단일 조회 결과이며 장애 주입·지속 운영 안정성의 증명은 아닙니다. 증거는 `rc4-production-alias-evidence.json`, `rc4-runtime-error-logs.jsonl`, `rc4-runtime-error-query.log`입니다.
 
 실제 모델 최종 답변 0/90, 사람의 원문·표 관계 검토 0/30, 통제된 원격 Worker 장애 주입·cold start, 미제공 최종 출시 Gate는 남아 있습니다. 스캔·자체 수준 라벨·페이지를 가로지르는 표 등 별도 표본 공백도 독립 평가의 `outputs/coverage-gaps.json`에 기록되어 있습니다. 고정 인자 도구 검사, 합성 검사, 구현자 만료·복구 검사로 이 항목을 완료 처리하지 않습니다. `releaseEligible:false`이며 이 문서는 출시 승인서가 아닙니다.
 

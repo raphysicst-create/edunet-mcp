@@ -4,7 +4,7 @@ import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/cli
 import {fileURLToPath} from 'node:url';
 import {buildIdentity} from './build-identity.mjs';
 
-const endpoint = new URL(process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? 'https://edunet-mcp.vercel.app/api/mcp');
+const endpoint = new URL(process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? (console.error('usage: node scripts/verify-remote.mjs <https://<host>/api/mcp>'), process.exit(2)));
 assert.ok(['https:', 'http:'].includes(endpoint.protocol) && !endpoint.username && !endpoint.password);
 const expectedVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 const client = new Client({ name: 'edunet-remote-verification', version: expectedVersion });

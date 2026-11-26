@@ -5,11 +5,11 @@
 - 제품 버전: `1.1.0-rc.2`
 - 소스 커밋: `8f40db7db93eaa125bf09beec8ebf9c80faf39cb`
 - 검증 배포: `dpl_2Eu69X7A7xUAqVLqt5egJGFigqUv`, READY
-- [검증 MCP](https://edunet-3ttr8a081-raphysicst.vercel.app/api/mcp), [Vercel 배포](https://vercel.com/raphysicst/edunet-mcp/2Eu69X7A7xUAqVLqt5egJGFigqUv)
+- [검증 MCP](https://<검증배포도메인>/api/mcp), [Vercel 배포](https://vercel.com/raphysicst/edunet-mcp/2Eu69X7A7xUAqVLqt5egJGFigqUv)
 - 소스 digest: `99e62fe6f2822ebb06aae651b78b7b9338b9b6ff1dbb8fe49b98b65341c02f40`
 - 원격 manifest digest: `42da8b250e430c77f6e3a1d5fbae763c5d4f3cf8d4605066a3b2375dcbad9262`
 
-`--prod --skip-domain`으로 기존 운영 환경을 사용하는 검증 배포를 만들었습니다. 공개 서비스 도메인 `edunet-mcp.vercel.app`은 별도 조회에서 기존 `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`를 가리켰습니다. 검증용 배포 보호는 유지하며 기존 자동화 인증을 고정 origin 요청에만 사용합니다. 인증값은 소스·manifest·평가 보고서에 기록하지 않습니다.
+`--prod --skip-domain`으로 기존 운영 환경을 사용하는 검증 배포를 만들었습니다. 공개 서비스 도메인 `<배포도메인>`은 별도 조회에서 기존 `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`를 가리켰습니다. 검증용 배포 보호는 유지하며 기존 자동화 인증을 고정 origin 요청에만 사용합니다. 인증값은 소스·manifest·평가 보고서에 기록하지 않습니다.
 
 ## 수정한 문제
 

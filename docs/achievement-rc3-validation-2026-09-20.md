@@ -5,7 +5,7 @@
 - 버전 `1.1.0-rc.3`, profile `1.2.0`
 - 소스 `0b86fd13faba8ea647bcfcaa86de2a3d61a12bf5`
 - 배포 `dpl_211AVkyqNFKGrxaA8ACG9bLX4ero`, READY
-- [검증 MCP](https://edunet-ovdihod7q-raphysicst.vercel.app/api/mcp), [배포 상세](https://vercel.com/raphysicst/edunet-mcp/211AVkyqNFKGrxaA8ACG9bLX4ero)
+- [검증 MCP](https://<검증배포도메인>/api/mcp), [배포 상세](https://vercel.com/raphysicst/edunet-mcp/211AVkyqNFKGrxaA8ACG9bLX4ero)
 - sourceDigest `3ae286794d83416fc2f5ecd314e57fec383edcbf8980e31edf77e848b5e6d803`
 - 원격 manifestDigest `76fe48e149d781eef89e403aaf37eb743e68f5cb7ddee71e7327ec9bea7530db`
 

@@ -52,7 +52,7 @@ Vercel 프로젝트의 Production 환경에 다음 값을 설정합니다. 로�
 ## 배포 후 실제 검증
 
 ```sh
-npm run verify:remote -- https://edunet-mcp.vercel.app/api/mcp --read
+npm run verify:remote -- https://<배포도메인>/api/mcp --read
 ```
 
 소스 digest·패키지 버전 일치, 도구 3개, 실제 `광합성` 검색, 과학 성취수준 후보 탐색, 첨부 목록 및 지정된 과학 PDF의 `[9과05-01]` A–E를 확인합니다. 목표 자료를 다른 성공 첨부로 바꾸지 않습니다. `metadata_only`는 파일 텍스트를 읽었으나 성취수준 레코드를 확정하지 못했다는 의미입니다. 후보 검색의 `partial` 경고와 원문 읽기의 경고는 그대로 기록하며 도메인 정확도 검증을 대신하지 않습니다.
@@ -61,8 +61,8 @@ npm run verify:remote -- https://edunet-mcp.vercel.app/api/mcp --read
 
 - 기존 `raphysicst/edunet-mcp` 프로젝트에 CLI로 운영 배포했습니다. Git 저장소는 Vercel 프로젝트에 연결돼 있지 않으므로 GitHub push만으로 자동 재배포되지 않습니다.
 - 코드 커밋: `74a4d19e55de611b5435a27697d2749099409a75`. 구현 `54656d5`, 참조 시간 오류 수정 `fafe151`을 포함합니다.
-- 배포 ID: `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`, 상태 `READY`, production alias `https://edunet-mcp.vercel.app`.
-- [배포 상세](https://vercel.com/raphysicst/edunet-mcp/B75SY33uabZUFmRSUN7QhkddXCDK), [MCP 주소](https://edunet-mcp.vercel.app/api/mcp).
+- 배포 ID: `dpl_B75SY33uabZUFmRSUN7QhkddXCDK`, 상태 `READY`, production alias `https://<배포도메인>`.
+- [배포 상세](https://vercel.com/raphysicst/edunet-mcp/B75SY33uabZUFmRSUN7QhkddXCDK), [MCP 주소](https://<배포도메인>/api/mcp).
 - Vercel Linux 빌드: 28초, 함수 818개 파일 / 67.14 MiB. 런타임 Node.js 24.
 - 로컬 타입 검사 및 전체 테스트 **176/176** 통과. 독립 임시 디렉터리의 배포 파일만으로 API import, PDF/HWP/HWPX 파싱, PDFium WASM, Worker IPC 검증을 포함합니다.
 - 원격 초기화 버전 `1.1.0-beta.1`, 도구 `search_edunet`, `search_edunet_achievement`, `read_edunet_achievement` 확인.

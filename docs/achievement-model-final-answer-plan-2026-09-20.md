@@ -20,7 +20,7 @@
 - 후보: RC4 `1.1.0-rc.4`, profile `1.2.1`.
 - 소스 커밋: `74d14ccac8d7f557ae4fa7b65bf4e27a6d7b772d`.
 - sourceDigest: `7b2b906fe08a4e169662b9a0e08a02457a273ba9678f3cbae6d833a97e2cccb6`.
-- 검증 배포: `dpl_A2hAfTU7TcfPmtM1mofT1ZScwfxc`, `https://edunet-oceo0joah-raphysicst.vercel.app/api/mcp`.
+- 검증 배포: `dpl_A2hAfTU7TcfPmtM1mofT1ZScwfxc`, `https://<검증배포도메인>/api/mcp`.
 - 원문 corpus: `C:/Users/22/Documents/Codex/2026-09-20/edunet-achievement-rc-evaluator/outputs/corpus/corpus.json`.
 - 기존 corpus SHA256: `4602a056b74e8b4c1581efb4b2859e8be0c5180d53a06356f84d4eef4a3600aa`.
 
